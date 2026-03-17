@@ -4,12 +4,12 @@ from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.query_uttils import extract_gram
 from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_synset_relations, \
     fetch_exteral_synset_eq_relations, fetch_exteral_synset_neq_relations
 from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_gloss_entry_links, \
     fetch_gloss_sense_links, fetch_semantic_derivs_by_sense
 from lv.ailab.tezaurs.dbobjects.examples import Example
+from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
 
@@ -22,7 +22,7 @@ class Sense:
         self.gloss : str = gloss
 
         self.synset : Optional[Synset] = None
-        self.gram = None
+        self.gram : Optional[GramInfo] = None
 
         self.examples : list[Example] = []
         self.subsenses : list[Sense] = []
@@ -55,7 +55,7 @@ class Sense:
         result = []
         for sense_data in senses:
             sense = Sense(sense_data.id, sense_data.order_no, sense_data.gloss, sense_data.hidden)
-            sense.gram = extract_gram(sense_data, None)
+            sense.gram = GramInfo.extract_gram(sense_data, None)
             if sense_data.synset_id:
                 sense.synset = Synset(
                     sense_data.synset_id,

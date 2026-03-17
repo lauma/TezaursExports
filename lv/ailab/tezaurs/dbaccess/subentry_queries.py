@@ -1,4 +1,5 @@
 from psycopg2.extras import NamedTupleCursor
+
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 
 

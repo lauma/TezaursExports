@@ -2,9 +2,9 @@ from functools import reduce
 from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.query_uttils import extract_paradigm_stems, combine_inherited_flags
 from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_exteral_synset_eq_relations
 from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_wordforms, fetch_synseted_senses_by_lexeme
+from lv.ailab.tezaurs.dbobjects.gram import combine_inherited_flags, GramInfo
 
 
 def get_dict_version(connection):
@@ -68,7 +68,9 @@ ORDER BY l.lemma ASC
             result = {'id': row.id, 'entry': row.entry_hk, 'lemma': row.lemma, 'pos': row.p_pos,
                       'abbr_type': row.p_abbr_type}
             if hasattr(row, 'paradigm') and row.paradigm:
-                result['paradigm'] = extract_paradigm_stems(row)
+                gram = GramInfo()
+                gram.set_paradigm_stems(row)
+                result['gram'] = gram
 
             if row.lex_pos:
                 result['pos'] = row.lex_pos

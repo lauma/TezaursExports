@@ -1,7 +1,7 @@
 import regex
 
 
-def prettify_pronunciation(pronunciation):
+def prettify_pronunciation(pronunciation : str) -> str:
     pronunciation = pronunciation.strip()
     pronunciation = regex.sub(',', "\u0327", pronunciation)
     pronunciation = regex.sub('~', "\u0303", pronunciation)
@@ -14,5 +14,5 @@ def prettify_pronunciation(pronunciation):
     return pronunciation
 
 
-def prettify_text_with_pronunciation(text):
+def prettify_text_with_pronunciation(text : str) -> str:
     return regex.sub(r"\[[^\[\]]+]", lambda x: prettify_pronunciation(x.group(0)), text)

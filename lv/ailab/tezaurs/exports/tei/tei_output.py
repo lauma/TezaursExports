@@ -3,12 +3,14 @@ import regex
 
 from lv.ailab.tezaurs.dbobjects.entries import Entry
 from lv.ailab.tezaurs.dbobjects.examples import Example
+from lv.ailab.tezaurs.dbobjects.gram import GramInfo, Flags
+from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 from lv.ailab.tezaurs.utils.dict.gloss_normalization import mandatory_normalization, full_cleanup
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
+from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoAttr, MorphoVal
 from lv.ailab.tezaurs.utils.dict.pron_normalization import prettify_pronunciation, prettify_text_with_pronunciation
-from lv.ailab.tezaurs.dbaccess.query_uttils import extract_paradigm_text
 from lv.ailab.tezaurs.utils.xml.writer import XMLWriter
 
 
@@ -93,7 +95,7 @@ class TEIWriter(XMLWriter):
                    edition : str = 'TODO', editors : str = 'TODO',
                    entry_count : str = 'TODO', lexeme_count : str = 'TODO', sense_count : str = 'TODO',
                    year : str = 'TODO', month : str = 'TODO',
-                   url : Optional[str] = None, copyright : Optional[str] = None):
+                   url : Optional[str] = None, dict_copyright : Optional[str] = None):
         self.start_document()
         self.start_node('TEI', {})
         self.start_node('fileDesc', {})
@@ -162,7 +164,7 @@ class TEIWriter(XMLWriter):
             self.start_node('availability', {'status': 'free'})
 
             if url is not None and (dictionary.startswith('tezaurs') or dictionary == 'mlvv' or dictionary == 'llvv' or dictionary.startswith('ltg')):
-                self.do_simple_leaf_node('p', {}, copyright)
+                self.do_simple_leaf_node('p', {}, dict_copyright)
 
             self.do_simple_leaf_node('licence', {'target': 'https://creativecommons.org/licenses/by-sa/4.0/'},
                                      'Creative Commons Attribution-ShareAlike 4.0 International License')
@@ -236,14 +238,18 @@ class TEIWriter(XMLWriter):
             entry_xml_attrs['n'] = str(entry.homonym)
         if entry.type == 'mwe' or entry.type == 'MWE':
             entry_xml_attrs['type'] = 'mwe'
-        elif main_lexeme['lemma'] and 'pos' in main_lexeme and 'Vārda daļa' in main_lexeme['pos'] or \
-                entry.type == 'wordPart':
+        #elif main_lexeme.lemma and 'pos' in main_lexeme and 'Vārda daļa' in main_lexeme['pos'] or entry.type == 'wordPart':
+        elif entry.type == 'wordPart':
             entry_xml_attrs['type'] = 'affix'  # FIXME
-        elif main_lexeme['lemma'] and 'pos' in main_lexeme and 'Saīsinājums' in main_lexeme['pos'] or \
-                'paradigm' in main_lexeme and main_lexeme['paradigm']['id'] == 'abbr':
+        #elif main_lexeme.lemma and 'pos' in main_lexeme and 'Saīsinājums' in main_lexeme['pos'] or 'paradigm' in main_lexeme and main_lexeme['paradigm']['id'] == 'abbr':
+        elif main_lexeme.gramInfo and (main_lexeme.gramInfo.paradigmName == 'abbr'
+                or MorphoAttr.POS in main_lexeme.gramInfo.flags and main_lexeme.gramInfo.flags[MorphoAttr.POS] == MorphoVal.ABBR ):
             entry_xml_attrs['type'] = 'abbr'
-        elif main_lexeme['lemma'] and 'pos' in main_lexeme and 'Vārds svešvalodā' in main_lexeme['pos'] or \
-                'paradigm' in main_lexeme and main_lexeme['paradigm']['id'] == 'foreign':
+        elif main_lexeme.gramInfo and (main_lexeme.gramInfo.paradigmName == 'foreign'
+                or MorphoAttr.POS in main_lexeme.gramInfo.flags
+                   and main_lexeme.gramInfo.flags[MorphoAttr.POS] == MorphoVal.FOREIGN
+                or MorphoAttr.RESIDUAL_TYPE in main_lexeme.gramInfo.flags
+                   and main_lexeme.gramInfo.flags[MorphoAttr.RESIDUAL_TYPE] == MorphoVal.FOREIGN):
             entry_xml_attrs['type'] = 'foreign'
         else:
             entry_xml_attrs['type'] = 'main'
@@ -273,64 +279,56 @@ class TEIWriter(XMLWriter):
         self.end_node('entry')
 
 
-    def print_lexeme(self, lexeme, id_stub, headword, entry_type, is_main=False):
-        lexeme_id = f'{id_stub}/{lexeme["id"]}'
+    def print_lexeme(self, lexeme : Lexeme, id_stub : str, headword : str,
+                     entry_type : str, is_main : bool = False):
+        lexeme_id = f'{id_stub}/{lexeme.dbId}'
         form_attrs = {}
         if is_main:
             form_attrs = {'id': lexeme_id, 'type': 'lemma'}
         else:
-            form_attrs = {'id': lexeme_id, 'type': lexeme_type(lexeme['type'], entry_type)}
-        if lexeme['hidden']:
+            form_attrs = {'id': lexeme_id, 'type': lexeme_type(lexeme.type, entry_type)}
+        if lexeme.hidden:
             form_attrs['rend'] = 'hidden'
         self.start_node('form', form_attrs)
 
         # TODO vai šito vajag?
-        if is_main and lexeme['lemma'] != headword:
+        if is_main and lexeme.lemma != headword:
             self.do_simple_leaf_node('form', {'type': 'headword'}, headword)
-        self.do_simple_leaf_node('orth', {'type': 'lemma'}, lexeme['lemma'])
-        if 'pronun' in lexeme:
-            for pronun in lexeme['pronun']:
-                self.do_simple_leaf_node('pron', {}, prettify_pronunciation(pronun))
+        self.do_simple_leaf_node('orth', {'type': 'lemma'}, lexeme.lemma)
+        for pronun in lexeme.pronunciations:
+            self.do_simple_leaf_node('pron', {}, prettify_pronunciation(pronun))
 
-        self.print_gram(lexeme)
+        self.print_gram(lexeme.gramInfo)
 
-        if 'sources' in lexeme:
-            self.print_esl_sources(lexeme['sources'])
+        if lexeme.sources:
+            self.print_esl_sources(lexeme.sources)
 
         self.end_node('form')
 
 
-    def print_gram(self, parent, wraper_elem_name=None):
-        if 'flags' not in parent and 'struct_restr' not in parent and \
-                'free_text' not in parent and 'infl_text' not in parent:
+    def print_gram(self, gram : GramInfo, wraper_elem_name : Optional[str] = None):
+        if not gram.flags and not gram.structuralRestrictions and \
+                not gram.freeText and not gram.inflectionText:
             return
 
         if wraper_elem_name:
             self.start_node(wraper_elem_name, {})
 
         self.start_node('gramGrp', {})
-        # TODO vai šito vajag?
-        # if 'pos' in lexeme or 'pos_text' in lexeme:
-        #    if 'pos' in lexeme:
-        #        for g in set(lexeme['pos']):
-        #            self._do_leaf_node('gram', {'type': 'pos'}, g)
-        #    elif 'pos_text' in lexeme:
-        #        self._do_leaf_node('gram', {}, lexeme['pos_text'])
 
         # TODO: kā labāk - celms kā karogs vai paradigmas daļa?
-        if 'paradigm' in parent:
-            paradigm_text = extract_paradigm_text(parent['paradigm'])
-
+        if gram.paradigmName:
+            paradigm_text = gram.get_paradigm_text()
             self.do_simple_leaf_node('iType', {'type': 'computational', 'corresp': '#MORPHO'}, paradigm_text)
-        elif 'infl_text' in parent:
-            self.do_simple_leaf_node('iType', {}, prettify_text_with_pronunciation(parent['infl_text']))
+        elif gram.inflectionText:
+            self.do_simple_leaf_node('iType', {}, prettify_text_with_pronunciation(gram.inflectionText))
 
-        if 'flags' in parent:
-            self.print_flags(parent['flags'])
-        if 'struct_restr' in parent:
-            self.print_struct_restr(parent['struct_restr'])
-        if not ('flags' in parent) and not ('struct_restr' in parent) and 'free_text' in parent:
-            self.do_simple_leaf_node('gram', {}, prettify_text_with_pronunciation(parent['free_text']))
+        if gram.flags and len(gram.flags) > 0:
+            self.print_flags(gram.flags)
+        if gram.structuralRestrictions:
+            self.print_struct_restr(gram.structuralRestrictions)
+        if (not gram.flags or len(gram.flags) < 1 ) and not gram.structuralRestrictions and gram.freeText:
+            self.do_simple_leaf_node('gram', {}, prettify_text_with_pronunciation(gram.freeText))
 
         self.end_node('gramGrp')
         if wraper_elem_name:
@@ -338,9 +336,9 @@ class TEIWriter(XMLWriter):
 
 
     # TODO piesaistīt karoga anglisko nosaukumu
-    def print_flags(self, flags, ignored_flags=None):
+    def print_flags(self, flags : Flags, ignored_flags : Optional[set[str]] = None):
         if ignored_flags is None:
-            ignored_flags = []
+            ignored_flags = {}
         if not flags:
             return
         self.start_node('gramGrp', {'type': 'properties'})
@@ -464,7 +462,8 @@ class TEIWriter(XMLWriter):
         self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{morpho_deriv["my_role"]}')
         self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{morpho_deriv["target_role"]}')
         self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/{morpho_deriv["target_softid"]}'})
-        self.print_gram(morpho_deriv, 'desc')
+        if 'gram' in morpho_deriv:
+            self.print_gram(morpho_deriv['gram'], 'desc')
         self.end_node('xr')
 
 
@@ -537,7 +536,7 @@ class TEIWriter(XMLWriter):
         else:
             self.start_node('form', {'type': 'inflection'})
         self.do_simple_leaf_node('orth', {}, wordform_from_json['Vārds'])
-        self.print_flags(wordform_from_json, ['Vārds', 'Sistemātisks atvasinājums'])
+        self.print_flags(wordform_from_json, {'Vārds', 'Sistemātisks atvasinājums'})
         self.end_node('form')
 
 

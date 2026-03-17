@@ -1,6 +1,4 @@
-from typing import NamedTuple
 import psycopg2
-from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 
@@ -22,7 +20,8 @@ def db_connect() -> DbConnection:
         )
     return db_connection
 
-
+#from typing import NamedTuple
+#from psycopg2.extras import NamedTupleCursor
 #def query(sql, parameters, db_connection : DbConnection) -> list[NamedTuple]:
 #    cursor = db_connection.cursor(cursor_factory=NamedTupleCursor)
 #    cursor.execute(sql, parameters)

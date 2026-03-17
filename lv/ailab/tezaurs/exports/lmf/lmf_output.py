@@ -1,6 +1,5 @@
 from lv.ailab.tezaurs.dbobjects.senses import Synset
 from lv.ailab.tezaurs.utils.dict.gloss_normalization import full_cleanup
-from lv.ailab.tezaurs.dbaccess.query_uttils import lmfiy_pos, extract_paradigm_text
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
 from lv.ailab.tezaurs.utils.xml.writer import XMLWriter
 
@@ -38,11 +37,11 @@ class LMFWriter(XMLWriter):
         item_id = f'{gen_id}-{lexeme["entry"]}-{lexeme["id"]}'
         self.debug_id = item_id
         self.start_node('LexicalEntry', {'id': item_id})
-        lmfpos = lmfiy_pos(lexeme['pos'], lexeme['abbr_type'], lexeme['lemma'])
+        lmfpos = LMFWriter.lmfiy_pos(lexeme['pos'], lexeme['abbr_type'], lexeme['lemma'])
         lemma_params = {'writtenForm': lexeme['lemma'], 'partOfSpeech': lmfpos}
         self.do_simple_leaf_node('Lemma', lemma_params)
-        if print_tags and 'paradigm' in lexeme:
-            paradigm_text = extract_paradigm_text(lexeme['paradigm'])
+        if print_tags and 'gram' in lexeme:
+            paradigm_text = lexeme['gram'].get_paradigm_text()
             if paradigm_text:
                 self.do_simple_leaf_node('Tag', {}, paradigm_text)
         for syn_sense in synseted_senses:
@@ -83,3 +82,31 @@ class LMFWriter(XMLWriter):
                     attribs['source'] = example.source
                 self.do_simple_leaf_node('Example', attribs, example.text)
         self.end_node('Synset')
+
+
+    @staticmethod
+    def lmfiy_pos(pos: str, abbr_type: str, lemma) -> str:
+        if not pos:
+            return 'u'
+        elif pos == 'Lietvārds' \
+                or pos == 'Saīsinājums' and (abbr_type == 'Sugasvārds' or abbr_type == 'Īpašvārds'):
+            return 'n'
+        elif pos == 'Darbības vārds' or pos == 'Divdabis' \
+                or pos == 'Saīsinājums' and abbr_type == 'Verbāls':
+            return 'v'
+        elif pos == 'Īpašības vārds' \
+                or pos == 'Saīsinājums' and abbr_type == 'Īpašības vārds':
+            return 'a'
+        elif pos == 'Apstākļa vārds' \
+                or pos == 'Saīsinājums' and abbr_type == 'Apstāklis':
+            return 'r'
+        elif pos == 'Prievārds':
+            return 'p'
+        elif pos == 'Partikula' or pos == 'Saiklis' or pos == 'Izsauksmes vārds' \
+                or pos == 'Vietniekvārds' or pos == 'Skaitļa vārds':
+            return 'x'
+        elif pos == 'Reziduālis':
+            return 'u'
+        else:
+            print(f'Unknown POS {pos} for lemma {lemma}.')
+            return 'u'

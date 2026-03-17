@@ -2,13 +2,14 @@ from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
+from lv.ailab.tezaurs.dbobjects.gram import Flags
 
 
 class Paradigm:
     def __init__(self, db_id, paradigm_name, flags):
         self.dbId : int = db_id
         self.name : str = paradigm_name
-        self.flags : dict[str, str|list[str]] = flags
+        self.flags : Flags = flags
 
     @staticmethod
     def fetch_all_paradigms(connection : DbConnection) -> dict[str, Paradigm]:

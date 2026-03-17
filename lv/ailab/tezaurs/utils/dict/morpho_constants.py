@@ -1,3 +1,4 @@
+# TODO savienot šo ar tagset.xml no morfoloģijas
 class MorphoAttr:
     POS = "Vārdšķira"
 
@@ -13,8 +14,11 @@ class MorphoAttr:
 
     LEMMA_WEIRDNESS = "Leksēmas pamatformas īpatnības"
 
+    RESIDUAL_TYPE = "Reziduāļa tips"
+
 class MorphoVal:
     NOUN = "Lietvārds"
+    ABBR = "Saīsinājums"
 
     SINGULAR = "Vienskaitlis"
     PLURAL = "Daudzskaitlis"
@@ -27,3 +31,5 @@ class MorphoVal:
     PROPER_NOUN = "Īpašvārds"
 
     PLACE_NAME = "Vietvārds"
+
+    FOREIGN = "Vārds svešvalodā"
