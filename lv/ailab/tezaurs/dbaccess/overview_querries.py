@@ -4,7 +4,7 @@ from psycopg2.extras import NamedTupleCursor
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_exteral_synset_eq_relations
 from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_wordforms, fetch_synseted_senses_by_lexeme
-from lv.ailab.tezaurs.dbobjects.gram import combine_inherited_flags, GramInfo
+from lv.ailab.tezaurs.dbobjects.gram import combine_inherited_flags
 
 
 def get_dict_version(connection):
@@ -33,51 +33,6 @@ def get_dict_version(connection):
         'entries': row.entries, 'lexemes': row.lexemes, 'senses': row.senses,
         'year': row.year, 'month': row.month,
         'url': row.url}
-
-
-def fetch_all_synseted_lexemes(connection):
-    cursor = connection.cursor(cursor_factory=NamedTupleCursor)
-    sql_synset_lexemes = f"""
-SELECT l.id as id, l.entry_id as entry_id, l.lemma as lemma,
-    l.data->'Gram'->'Flags'->>'Vārdšķira' as lex_pos,
-    l.data->'Gram'->'Flags'->>'Saīsinājuma tips' as lex_abbr_type,
-    p.data->>'Vārdšķira' as p_pos,
-    p.data->>'Saīsinājuma tips' as p_abbr_type,
-    p.human_key as paradigm, stem1, stem2, stem3, e.human_key as entry_hk
-FROM {db_connection_info['schema']}.lexemes as l
-JOIN {db_connection_info['schema']}.lexeme_types lt on l.type_id = lt.id
-LEFT JOIN {db_connection_info['schema']}.paradigms p on l.paradigm_id = p.id
-JOIN {db_connection_info['schema']}.entries e on l.entry_id = e.id
-JOIN {db_connection_info['schema']}.senses s on l.entry_id = s.entry_id
-WHERE s.synset_id <> 0
-      AND (NOT l.hidden OR l.reason_for_hiding='not-public')
-      AND (NOT s.hidden OR s.reason_for_hiding='not-public')
-      AND (NOT e.hidden OR e.reason_for_hiding='not-public') 
-      AND (lt.name = 'default' OR lt.name = 'alternativeSpelling' OR lt.name = 'abbreviation')
-GROUP BY l.id, paradigm, p_pos, p_abbr_type, entry_hk
-ORDER BY l.lemma ASC
-"""
-    cursor.execute(sql_synset_lexemes)
-    counter = 0
-    while True:
-        rows = cursor.fetchmany(1000)
-        if not rows:
-            break
-        for row in rows:
-            counter = counter + 1
-            result = {'id': row.id, 'entry': row.entry_hk, 'lemma': row.lemma, 'pos': row.p_pos,
-                      'abbr_type': row.p_abbr_type}
-            if hasattr(row, 'paradigm') and row.paradigm:
-                gram = GramInfo()
-                gram.set_paradigm_stems(row)
-                result['gram'] = gram
-
-            if row.lex_pos:
-                result['pos'] = row.lex_pos
-            if row.lex_abbr_type:
-                result['abbr_type'] = row.lex_abbr_type
-            yield result
-        print(f'lexemes: {counter}\r')
 
 
 def fetch_all_lexemes_with_paradigms_and_synsets(connection):

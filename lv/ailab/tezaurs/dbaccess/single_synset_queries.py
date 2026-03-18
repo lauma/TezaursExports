@@ -46,31 +46,6 @@ GROUP BY rel.id, tp.name, tp.name_inverse, rel_name
     return sorted_result
 
 
-def fetch_synset_lexemes(connection, synset_id):
-    cursor = connection.cursor(cursor_factory=NamedTupleCursor)
-    sql_synset_lexemes = f"""
-SELECT syn.id,
-    l.id as lexeme_id, l.lemma as lemma, l.hidden, e.human_key as entry_hk
-FROM {db_connection_info['schema']}.synsets syn
-RIGHT OUTER JOIN {db_connection_info['schema']}.senses s ON syn.id = s.synset_id
-RIGHT OUTER JOIN {db_connection_info['schema']}.lexemes l ON s.entry_id = l.entry_id
-JOIN {db_connection_info['schema']}.lexeme_types lt on l.type_id = lt.id
-JOIN {db_connection_info['schema']}.entries e ON s.entry_id = e.id
-WHERE syn.id = {synset_id}
-      and (NOT s.hidden or s.reason_for_hiding='not-public')
-      and (NOT l.hidden or l.reason_for_hiding='not-public')
-      and (NOT e.hidden or e.reason_for_hiding='not-public') and
-      (lt.name = 'default' or lt.name = 'alternativeSpelling' or lt.name = 'abbreviation')
-ORDER BY e.type_id, entry_hk
-"""
-    cursor.execute(sql_synset_lexemes)
-    lexemes = cursor.fetchall()
-    result = []
-    for lexeme in lexemes:
-        result.append({'lexeme_id': lexeme.lexeme_id, 'lemma': lexeme.lemma, 'entry': lexeme.entry_hk, 'hidden': lexeme.hidden})
-    return result
-
-
 def fetch_exteral_synset_eq_relations(connection, synset_id, rel_type=None):
     where_clause = ''
     if rel_type is not None:

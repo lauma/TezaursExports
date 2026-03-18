@@ -1,3 +1,4 @@
+from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.dbobjects.senses import Synset
 from lv.ailab.tezaurs.utils.dict.gloss_normalization import full_cleanup
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
@@ -32,30 +33,32 @@ class LMFWriter(XMLWriter):
         self.end_node('LexicalResource')
         self.end_document()
 
-    def print_lexeme(self, lexeme, synseted_senses, print_tags):
+    def print_lexeme(self, lexeme : Lexeme, synseted_senses, print_tags : bool):
         gen_id = f'{self.wordnet_id}-{self.dict_version}'
-        item_id = f'{gen_id}-{lexeme["entry"]}-{lexeme["id"]}'
+        item_id = f'{gen_id}-{lexeme.parentEntryHK}-{lexeme.dbId}'
         self.debug_id = item_id
         self.start_node('LexicalEntry', {'id': item_id})
-        lmfpos = LMFWriter.lmfiy_pos(lexeme['pos'], lexeme['abbr_type'], lexeme['lemma'])
-        lemma_params = {'writtenForm': lexeme['lemma'], 'partOfSpeech': lmfpos}
+        pos, abbr_pos = lexeme.gramInfo.get_poses()
+        lmfpos = LMFWriter.lmfiy_pos(pos, abbr_pos, lexeme.lemma)
+        lemma_params = {'writtenForm': lexeme.lemma, 'partOfSpeech': lmfpos}
         self.do_simple_leaf_node('Lemma', lemma_params)
-        if print_tags and 'gram' in lexeme:
-            paradigm_text = lexeme['gram'].get_paradigm_text()
+        if print_tags and lexeme.gramInfo:
+            paradigm_text = lexeme.gramInfo.get_paradigm_text()
             if paradigm_text:
                 self.do_simple_leaf_node('Tag', {}, paradigm_text)
         for syn_sense in synseted_senses:
-            self.do_simple_leaf_node('Sense', {'id': f'{gen_id}-{lexeme["entry"]}-{syn_sense["sense_id"]}',
+            self.do_simple_leaf_node('Sense',
+                     {'id': f'{gen_id}-{lexeme.parentEntryHK}-{syn_sense["sense_id"]}',
                                                'synset': f'{gen_id}-{syn_sense["synset_id"]}'})
         self.end_node('LexicalEntry')
 
 
-    def print_synset(self, synset : Synset, synset_lexemes, ili_map : IliMapping):
+    def print_synset(self, synset : Synset, synset_lexemes : list[Lexeme], ili_map : IliMapping):
         item_id = f'{self.wordnet_id}-{self.dict_version}-{synset.dbId}'
         self.debug_id = item_id
         memberstr = ''
         for lexeme in synset_lexemes:
-            memberstr = f'{memberstr} {self.wordnet_id}-{self.dict_version}-{lexeme["entry"]}-{lexeme["lexeme_id"]}'
+            memberstr = f'{memberstr} {self.wordnet_id}-{self.dict_version}-{lexeme.parentEntryHK}-{lexeme.dbId}'
         pnw_id = None
         if synset.externalEqRelations:
             if len(synset.externalEqRelations) > 1:

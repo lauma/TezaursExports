@@ -4,9 +4,9 @@ from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 
 import sys
 
-from lv.ailab.tezaurs.dbaccess.overview_querries import fetch_all_synseted_lexemes, get_dict_version
-from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_synset_lexemes
+from lv.ailab.tezaurs.dbaccess.overview_querries import get_dict_version
 from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_synseted_senses_by_lexeme
+from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.dbobjects.senses import Synset
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
 from lv.ailab.tezaurs.exports.lmf.lmf_output import LMFWriter
@@ -35,15 +35,15 @@ with open(filename, 'w', encoding='utf8') as f:
     lmf_printer = LMFWriter(f, dict_version, wordnet_id)
     lmf_printer.print_head(wordnet_vers)
     try:
-        for lexeme in fetch_all_synseted_lexemes(connection):
-            synset_senses = fetch_synseted_senses_by_lexeme(connection, lexeme['id'])
+        for lexeme in Lexeme.fetch_all_synseted_lexemes(connection):
+            synset_senses = fetch_synseted_senses_by_lexeme(connection, lexeme.dbId)
             lmf_printer.print_lexeme(lexeme, synset_senses, print_tags)
     except BaseException as err:
         print(f"Lexeme was: {lmf_printer.debug_id}")
         raise
     try:
         for synset in Synset.fetch_all_synsets(connection, 'pwn-3.0'):
-            synset_lexemes = fetch_synset_lexemes(connection, synset.dbId)
+            synset_lexemes = Lexeme.fetch_synset_lexemes(connection, synset.dbId)
             # Drukās netukšos sinsetus, šobrīd tas nozīmē, ka vajag definīciju un leksēmu.
             if synset.senses and len(synset.senses) > 0 and synset_lexemes:
                 lmf_printer.print_synset(synset, synset_lexemes, ili)

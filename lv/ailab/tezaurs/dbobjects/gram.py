@@ -1,5 +1,6 @@
 from typing import Optional, NamedTuple, Iterable
 
+from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoAttr
 
 type Flags = dict[str, str|Iterable[str]]
 
@@ -66,6 +67,11 @@ class GramInfo:
                 result = result + self.stemPast
         return result
 
+
+    def get_poses(self) -> tuple[Optional[str], Optional[str]]:
+        pos = self.flags.get(MorphoAttr.POS, None)
+        abbr_pos = self.flags.get(MorphoAttr.ABBR_TYPE, None)
+        return pos, abbr_pos
 
 
     @staticmethod

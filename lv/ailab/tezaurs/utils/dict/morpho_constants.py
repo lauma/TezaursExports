@@ -16,6 +16,8 @@ class MorphoAttr:
 
     RESIDUAL_TYPE = "Reziduāļa tips"
 
+    ABBR_TYPE = "Saīsinājuma tips"
+
 class MorphoVal:
     NOUN = "Lietvārds"
     ABBR = "Saīsinājums"
