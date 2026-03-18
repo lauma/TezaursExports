@@ -5,7 +5,7 @@ from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 
 def fetch_wordforms(connection, lexeme_id):
     if not lexeme_id:
-        return
+        return []
     cursor = connection.cursor(cursor_factory=NamedTupleCursor)
     sql_wordforms = f"""
 SELECT id, form, data->'Gram'->'Flags' as flags, replaces_base
@@ -15,7 +15,7 @@ WHERE lexeme_id = {lexeme_id}
     cursor.execute(sql_wordforms)
     wordforms = cursor.fetchall()
     if not wordforms:
-        return
+        return []
     result = []
     for wf in wordforms:
         result.append({'form': wf.form, 'flags': wf.flags, 'replaces_base': wf.replaces_base})

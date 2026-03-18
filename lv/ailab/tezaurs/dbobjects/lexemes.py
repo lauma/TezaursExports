@@ -1,26 +1,32 @@
-from typing import Optional, NamedTuple, Generator
+from functools import reduce
+from typing import Optional, NamedTuple, Generator, Any
 
 from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
+from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_exteral_synset_eq_relations
+from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_synseted_senses_by_lexeme, fetch_wordforms
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
 
 class Lexeme:
-    def __init__(self, db_id, lemma, hidden, entry_id, type = None):
+    def __init__(self, db_id, lemma, hidden, type = None):
         self.dbId : int = db_id
-        self.parentEntryDbId : int = entry_id
         self.lemma : str = lemma
         self.type : Optional[str] = type
         self.hidden : bool = hidden
 
-        self.gramInfo : Optional[GramInfo] = None
+        self.gramInfo : GramInfo = GramInfo()
 
         self.pronunciations : list[str] = []
         self.sources : list[DictSource] = []
+        self.synsetIds : set[int] = set()
+        self.externalSynsetIds : set[str] = set()
+        self.wordforms : list[dict[str, Any]] = []
 
+        self.parentEntryDbId : Optional[int] = None
         self.parentEntryHK : Optional[str] = None
 
 
@@ -42,7 +48,8 @@ class Lexeme:
             return []
         result = []
         for lexeme_row in lexemes:
-            lexeme = Lexeme(lexeme_row.id, lexeme_row.lemma, lexeme_row.hidden, entry_id, lexeme_row.lexeme_type)
+            lexeme = Lexeme(lexeme_row.id, lexeme_row.lemma, lexeme_row.hidden, lexeme_row.lexeme_type)
+            lexeme.parentEntryDbId = entry_id
             if lexeme_row.data and 'Pronunciations' in lexeme_row.data:
                 lexeme.pronunciations = lexeme_row.data['Pronunciations']
             lexeme.gramInfo = GramInfo.extract_gram(
@@ -75,7 +82,8 @@ class Lexeme:
         lexemes = cursor.fetchall()
         result = []
         for lexemeRow in lexemes:
-            lexeme = Lexeme(lexemeRow.lexeme_id, lexemeRow.lemma, lexemeRow.hidden, lexemeRow.entry_id)
+            lexeme = Lexeme(lexemeRow.lexeme_id, lexemeRow.lemma, lexemeRow.hidden)
+            lexeme.parentEntryDbId = lexemeRow.entry_id
             lexeme.parentEntryHK = lexemeRow.entry_hk
             result.append(lexeme)
         return result
@@ -109,19 +117,53 @@ class Lexeme:
                 break
             for row in rows:
                 counter = counter + 1
-                result = Lexeme(row.id, row.lemma, row.hidden, row.entry_id)
+                result = Lexeme(row.id, row.lemma, row.hidden)
+                result.parentEntryDbId = row.entry_id
                 result.parentEntryHK = row.entry_hk
-                #result = {'id': row.id, 'entry': row.entry_hk, 'lemma': row.lemma, 'pos': row.p_pos,
-                #          'abbr_type': row.p_abbr_type}
                 result.gramInfo = GramInfo.extract_gram(row)
-                #if hasattr(row, 'paradigm') and row.paradigm:
-                #    gram = GramInfo()
-                #    gram.set_paradigm_stems(row)
-                #    result.gramInfo = gram
-
-                #if row.lex_pos:
-                #    result['pos'] = row.lex_pos
-                #if row.lex_abbr_type:
-                #    result['abbr_type'] = row.lex_abbr_type
                 yield result
             print(f'lexemes: {counter}\r')
+
+
+    @staticmethod
+    def fetch_all_lexemes_with_paradigms_and_synsets(connection : DbConnection) -> Generator[Lexeme]:
+        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        sql_lexemes = f"""
+    SELECT l.id, l.lemma, l.data, p.data as paradigm_data, p.human_key as paradigm,
+        stem1, stem2, stem3, l.hidden
+    FROM {db_connection_info['schema']}.lexemes l
+    JOIN {db_connection_info['schema']}.paradigms p ON l.paradigm_id = p.id 
+    JOIN {db_connection_info['schema']}.entries e ON l.entry_id = e.id 
+    WHERE (NOT l.hidden OR l.reason_for_hiding='not-public')
+        AND (NOT e.hidden OR e.reason_for_hiding='not-public') 
+    ORDER BY l.lemma, p.human_key 
+    """
+        cursor.execute(sql_lexemes)
+        counter = 0
+        while True:
+            rows = cursor.fetchmany(1000)
+            if not rows:
+                break
+            for row in rows:
+                counter = counter + 1
+                result = Lexeme(row.id, row.lemma, row.hidden)
+                result.gramInfo = GramInfo.extract_gram(row)
+                result.wordforms = fetch_wordforms(connection, row.id)
+                #result = {'id': row.id, 'lemma': row.lemma, 'paradigm': row.human_key,
+                #          'pos': row.true_pos, 'changed_pos': row.true_pos != row.paradigm_pos,
+                #          'paradigm_flags': row.paradigm_flags,
+                #          'combined_flags': combine_inherited_flags(row.flags, row.paradigm_flags),
+                #          'stem1': row.stem1, 'stem2': row.stem2, 'stem3': row.stem3,
+                #          'wordforms': fetch_wordforms(connection, row.id)}
+                synset_senses = fetch_synseted_senses_by_lexeme(connection, row.id)
+                synset_ids = set(map(lambda a: a['synset_id'] if 'synset_id' in a else {},
+                                     synset_senses)) if synset_senses else {}
+                external_synset_ids = set(map(lambda a: a['id'], reduce(
+                    lambda a, b: a + b,
+                    map(lambda a: fetch_exteral_synset_eq_relations(connection, a), synset_ids),
+                    [])))
+                result.synsetIds = synset_ids
+                result.externalSynsetIds = external_synset_ids
+                yield result
+            print(f'lexemes: {counter}\r')
+

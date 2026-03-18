@@ -1,33 +1,33 @@
 from typing import Optional, Iterable, Sized, Any
 
+from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.utils.dict.db_wordform_utils import is_replacing_wordform_set, filter_wordforms
 from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoVal, MorphoAttr
 
 
 class GFUtils:
 
-    INDENT = '  '
-    BIG_SEPARATOR = '_'
-    DEFAULT_LET_VARIABLE = 'l'
-    GF_NUMBER_SINGULAR = 'Sg'
-    GF_NUMBER_PLURAL = 'Pl'
-    GF_CASE_VOCATIVE = 'Voc'
-    GF_GEND_MASCULINE = 'Masc'
-    GF_GEND_FEMININE = 'Fem'
+    INDENT : str = '  '
+    BIG_SEPARATOR : str = '_'
+    DEFAULT_LET_VARIABLE : str = 'l'
+    GF_NUMBER_SINGULAR : str = 'Sg'
+    GF_NUMBER_PLURAL : str = 'Pl'
+    GF_CASE_VOCATIVE : str = 'Voc'
+    GF_GEND_MASCULINE : str = 'Masc'
+    GF_GEND_FEMININE : str = 'Fem'
 
-    DEFAULT_GF_POS = {
+    DEFAULT_GF_POS : dict[str, str] = {
         MorphoVal.NOUN: "N",
         #TODO ... Other entries
     }
 
     @staticmethod
-    def get_GF_pos(lexeme) -> str:
-        result = GFUtils.DEFAULT_GF_POS[lexeme['pos']]
-        if (lexeme['pos'] == MorphoVal.NOUN
-                and MorphoAttr.NOUN_TYPE in lexeme['combined_flags']
-                and lexeme['combined_flags'][MorphoAttr.NOUN_TYPE] == MorphoVal.PROPER_NOUN
-                and MorphoAttr.PNOUN_TYPE in lexeme['combined_flags']
-                and lexeme['combined_flags'][MorphoAttr.PNOUN_TYPE] == MorphoVal.PLACE_NAME):
+    def get_GF_pos(lexeme : Lexeme) -> str:
+        lexeme_pos = lexeme.gramInfo.flags[MorphoAttr.POS]
+        result = GFUtils.DEFAULT_GF_POS[lexeme_pos]
+        if (lexeme_pos == MorphoVal.NOUN
+                and lexeme.gramInfo.flags.get(MorphoAttr.NOUN_TYPE, "") == MorphoVal.PROPER_NOUN
+                and lexeme.gramInfo.flags.get(MorphoAttr.PNOUN_TYPE, "") == MorphoVal.PLACE_NAME):
             result = 'LN'
         return result
 
@@ -107,19 +107,19 @@ class GFUtils:
     #     Pl => bro.s ! Pl ** { Voc => "brāļi" } } ;
     #   gend = bro.gend } ;
     @staticmethod
-    def form_N_with_vocative_extension(lexeme : dict[str, Any],
-                                       paradigm_expr : str, gender : str = None) -> Optional[str]:
-        if 'wordforms' not in lexeme or not lexeme['wordforms'] or len(lexeme['wordforms']) < 1:
+    def form_N_with_vocative_extension(lexeme : Lexeme, paradigm_expr : str,
+                                       gender : str = None) -> Optional[str]:
+        if len(lexeme.wordforms) < 1:
             return None
         sg_voc_wfs, leftover_wordforms = filter_wordforms(
-            lexeme['wordforms'], {MorphoAttr.NUMBER: MorphoVal.SINGULAR, MorphoAttr.CASE: MorphoVal.VOCATIVE})
+            lexeme.wordforms, {MorphoAttr.NUMBER: MorphoVal.SINGULAR, MorphoAttr.CASE: MorphoVal.VOCATIVE})
         pl_voc_wfs, leftover_wordforms = filter_wordforms(
             leftover_wordforms, {MorphoAttr.NUMBER: MorphoVal.PLURAL, MorphoAttr.CASE: MorphoVal.VOCATIVE})
 
         extended_gf_table = GFUtils._form_table_with_vocative_extension(sg_voc_wfs, pl_voc_wfs)
 
         if not extended_gf_table or leftover_wordforms and len(leftover_wordforms) > 0:
-            print(f'Skipping {lexeme["lemma"]} because additional wordforms are not all vocatives!')
+            print(f'Skipping {lexeme.lemma} because additional wordforms are not all vocatives!')
             return None
         gf_gend = gender if gender else f"{GFUtils.DEFAULT_LET_VARIABLE}.gend"
         return f"let {GFUtils.DEFAULT_LET_VARIABLE} = {paradigm_expr} in {{ s = {extended_gf_table} ; gend = {gf_gend} }}"
@@ -153,5 +153,5 @@ class GFPrintItem:
                  ids : set[int] = None,
                  synsets : set[str] = None):
         self.lemmas : set[str] = set() if lemmas is None else lemmas
-        self.ids : set[str] = set() if ids is None else ids
+        self.ids : set[int] = set() if ids is None else ids
         self.synsets : set[str] = set() if synsets is None else synsets
