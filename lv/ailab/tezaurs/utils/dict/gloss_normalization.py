@@ -60,7 +60,7 @@ subscript = {
 }
 
 
-def _convert_to_sup(text, debug_text):
+def _convert_to_sup(text : str, debug_text : str) -> str:
     result = regex.sub(r'^[o0O]^(\s?[CF])', "\u00B0\\1", text) #grādu normalizācija
     warns = regex.findall('[^' + regex.escape(''.join(superscript.keys())) + ']', result)
     if warns:
@@ -70,7 +70,7 @@ def _convert_to_sup(text, debug_text):
     return result
 
 
-def _convert_to_sub(text, debug_text):
+def _convert_to_sub(text : str, debug_text : str) -> str:
     warns = regex.findall('[^' + regex.escape(''.join(subscript.keys())) + ']', text)
     if warns:
         print(', '.join(warns) + " was not transformed to subscript in string \"" + text
@@ -79,14 +79,14 @@ def _convert_to_sub(text, debug_text):
     return result
 
 
-def normalize_scripts(gloss):
+def normalize_scripts(gloss : str) -> str:
     result = gloss
     result = regex.sub(r'(?<!\\)\^([^ ]*?[^ \\])\^', lambda x: _convert_to_sup(x.group(1), gloss), result)
     result = regex.sub(r'(?<!\\)~([^ ]*?[^ \\])~', lambda x: _convert_to_sub(x.group(1), gloss), result)
     return result
 
 
-def full_cleanup(gloss):
+def full_cleanup(gloss : str) -> str:
     result = gloss
     result = _remove_anchor_links(result)
     result = normalize_scripts(result)
@@ -96,26 +96,26 @@ def full_cleanup(gloss):
     return result
 
 
-def _remove_anchor_links(gloss):
+def _remove_anchor_links(gloss : str) -> str:
     result = regex.sub(r'\[((?:\p{L}\p{M}*)+)\]\{[sen]:\d+\}', r'\1', gloss)
     return result
 
 
-def _remove_emphasis(gloss):
+def _remove_emphasis(gloss : str) -> str:
     result = gloss
     result = regex.sub('</?(em|i|small|b) ?/?>', '', result)
     result = regex.sub(r'(?<!\\)_+([^_]*[^_\\])_+', r'\1', result)
     return result
 
 
-def mandatory_normalization(gloss):
+def mandatory_normalization(gloss : str) -> str:
     result = gloss
     result = _symbol_normalization(result)
     result = _normalize_spacing(result)
     return result
 
 
-def _symbol_normalization(gloss):
+def _symbol_normalization(gloss : str) -> str:
     result = gloss
     result = regex.sub('-->', '→', result)
     #result = regex.sub('->', '→', result)
@@ -127,14 +127,14 @@ def _symbol_normalization(gloss):
     return result
 
 
-def _normalize_spacing(gloss):
+def _normalize_spacing(gloss : str) -> str:
     result = gloss
     result = regex.sub('\\n', ' ', result)
     result = regex.sub('  +', ' ', result)
     return result
 
 
-def _unescape_tez_md(gloss):
+def _unescape_tez_md(gloss : str) -> str:
     result = gloss
     result = regex.sub(r'\\_', '_', result)
     result = regex.sub(r'\\\^', '^', result)

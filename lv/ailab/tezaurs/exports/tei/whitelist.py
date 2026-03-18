@@ -1,19 +1,21 @@
+from typing import Any
+
 import regex
 
 
 class EntryDesc:
-    def __init__(self, entry_name, homonym=0):
-        self.entry_name = entry_name
-        self.homonym = homonym
+    def __init__(self, entry_name, homonym = 0):
+        self.entry_name : str = entry_name
+        self.homonym : int = homonym
 
-    def __eq__(self, other):
+    def __eq__(self, other : Any) -> bool:
         if self is other:
             return True
         if other is None:
             return False
         return isinstance(other, EntryDesc) and self.entry_name == other.entry_name and self.homonym == other.homonym
 
-    def __ne__(self, other):
+    def __ne__(self, other : Any) -> bool:
         return not self == other
 
 
@@ -22,7 +24,7 @@ class EntryWhitelist:
     def __init__(self):
         self.entries = []
 
-    def load(self, file_name):
+    def load(self, file_name : str) :
         with open(file_name, 'r', encoding='utf8') as f:
             for line in f:
                 line = line.strip()
@@ -34,5 +36,5 @@ class EntryWhitelist:
                 elif len(parts) > 0:
                     print(f'Weird line in entry list: "{line}"!')
 
-    def check(self, entry_name, homonym):
+    def check(self, entry_name : str, homonym : int) -> bool:
         return EntryDesc(entry_name, homonym) in self.entries
