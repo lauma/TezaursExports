@@ -1,7 +1,7 @@
-from typing import Optional, Iterable, Sized, Any
+from typing import Optional
 
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
-from lv.ailab.tezaurs.utils.dict.db_wordform_utils import is_replacing_wordform_set, filter_wordforms
+from lv.ailab.tezaurs.dbobjects.wordforms import Wordform
 from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoVal, MorphoAttr
 
 
@@ -65,11 +65,11 @@ class GFUtils:
     # gf_std_form_string is something like `bro.s ! Sg ! Voc` - something to add to include standard forms from paradigm
     # Result is something like `variants{ "brāl" ; bro.s ! Sg ! Voc }`
     @staticmethod
-    def _form_variant_list(wordforms : list[dict[str, Any]], gf_std_form_string : str) -> Optional[str]:
+    def _form_variant_list(wordforms : list[Wordform], gf_std_form_string : str) -> Optional[str]:
         if not wordforms or len(wordforms) < 1:
             return None
-        include_standard_forms = not is_replacing_wordform_set(wordforms)
-        result = " ; ".join(map(lambda wf: f"\"{wf['form']}\"", wordforms))
+        include_standard_forms = not Wordform.is_replacing_wordform_list(wordforms)
+        result = " ; ".join(map(lambda wf: f"\"{wf.form}\"", wordforms))
         if include_standard_forms:
             result = f"{result} ; {gf_std_form_string}"
         if len(wordforms) > 1 or include_standard_forms:
@@ -79,8 +79,8 @@ class GFUtils:
 
     # Result is something like `{ Sg => old_noun.s ! Sg ** variants{ "brāl" ; bro.s ! Sg ! Voc } ; Pl => old_noun.s ! Pl ** { Voc = "brāļi" } }`
     @staticmethod
-    def _form_table_with_vocative_extension(sg_voc_wordforms : list[dict[str, Any]],
-                                            pl_voc_wordforms : list[dict[str, Any]]) -> Optional[str]:
+    def _form_table_with_vocative_extension(sg_voc_wordforms : list[Wordform],
+                                            pl_voc_wordforms : list[Wordform]) -> Optional[str]:
         if ((not sg_voc_wordforms or len(sg_voc_wordforms) < 1)
                 and (not pl_voc_wordforms or len(pl_voc_wordforms) < 1)):
             return None
@@ -111,9 +111,9 @@ class GFUtils:
                                        gender : str = None) -> Optional[str]:
         if len(lexeme.wordforms) < 1:
             return None
-        sg_voc_wfs, leftover_wordforms = filter_wordforms(
+        sg_voc_wfs, leftover_wordforms = Wordform.filter_wordform_list(
             lexeme.wordforms, {MorphoAttr.NUMBER: MorphoVal.SINGULAR, MorphoAttr.CASE: MorphoVal.VOCATIVE})
-        pl_voc_wfs, leftover_wordforms = filter_wordforms(
+        pl_voc_wfs, leftover_wordforms = Wordform.filter_wordform_list(
             leftover_wordforms, {MorphoAttr.NUMBER: MorphoVal.PLURAL, MorphoAttr.CASE: MorphoVal.VOCATIVE})
 
         extended_gf_table = GFUtils._form_table_with_vocative_extension(sg_voc_wfs, pl_voc_wfs)

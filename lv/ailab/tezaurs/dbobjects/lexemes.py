@@ -1,14 +1,14 @@
 from functools import reduce
-from typing import Optional, NamedTuple, Generator, Any
-
+from typing import Optional, Generator
 from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_exteral_synset_eq_relations
-from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_synseted_senses_by_lexeme, fetch_wordforms
+from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_synseted_senses_by_lexeme
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
+from lv.ailab.tezaurs.dbobjects.wordforms import Wordform
 
 
 class Lexeme:
@@ -24,7 +24,7 @@ class Lexeme:
         self.sources : list[DictSource] = []
         self.synsetIds : set[int] = set()
         self.externalSynsetIds : set[str] = set()
-        self.wordforms : list[dict[str, Any]] = []
+        self.wordforms : list[Wordform] = []
 
         self.parentEntryDbId : Optional[int] = None
         self.parentEntryHK : Optional[str] = None
@@ -148,13 +148,7 @@ class Lexeme:
                 counter = counter + 1
                 result = Lexeme(row.id, row.lemma, row.hidden)
                 result.gramInfo = GramInfo.extract_gram(row)
-                result.wordforms = fetch_wordforms(connection, row.id)
-                #result = {'id': row.id, 'lemma': row.lemma, 'paradigm': row.human_key,
-                #          'pos': row.true_pos, 'changed_pos': row.true_pos != row.paradigm_pos,
-                #          'paradigm_flags': row.paradigm_flags,
-                #          'combined_flags': combine_inherited_flags(row.flags, row.paradigm_flags),
-                #          'stem1': row.stem1, 'stem2': row.stem2, 'stem3': row.stem3,
-                #          'wordforms': fetch_wordforms(connection, row.id)}
+                result.wordforms = Wordform.fetch_wordforms(connection, row.id)
                 synset_senses = fetch_synseted_senses_by_lexeme(connection, row.id)
                 synset_ids = set(map(lambda a: a['synset_id'] if 'synset_id' in a else {},
                                      synset_senses)) if synset_senses else {}
