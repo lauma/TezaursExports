@@ -1,7 +1,7 @@
-from psycopg2.extras import NamedTupleCursor
+from psycopg2.extras import DictCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.gram import Flags
 
 
@@ -14,14 +14,14 @@ class Paradigm:
     @staticmethod
     def fetch_all_paradigms(connection : DbConnection) -> dict[str, Paradigm]:
         result = {}
-        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        cursor = connection.cursor(cursor_factory=DictCursor)
         sql_paradigms = f"""
     SELECT id, data as flags, human_key as paradigm
-    FROM {db_connection_info['schema']}.paradigms
+    FROM {DbConnectionInfo.schema}.paradigms
     ORDER BY human_key ASC
     """
         cursor.execute(sql_paradigms)
-        paradigm_data = cursor.fetchall()
-        for p in paradigm_data:
-            result[p.paradigm] = Paradigm(p.id, p.paradigm, p.flags)
+        paradigms = cursor.fetchall()
+        for db_row in paradigms:
+            result[db_row['paradigm']] = Paradigm(db_row['id'], db_row['paradigm'], db_row['flags'])
         return result

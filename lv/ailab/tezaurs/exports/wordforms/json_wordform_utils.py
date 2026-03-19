@@ -120,7 +120,7 @@ class WordformReader:
                     # json_result = json.loads("{" + line.rstrip(", \n\r") + "}")
                     json_result = json.loads(line)
                 except ValueError as e:
-                    warnings.warn(f"Following was not parsed into JSON: {line}")
+                    warnings.warn(f"Following was not parsed into JSON: {line}; {e}")
                     self.bad_lines.append(line)
                     continue
                 yield json_result

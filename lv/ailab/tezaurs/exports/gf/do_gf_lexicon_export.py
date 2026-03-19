@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-from typing import Any
 import sys
 
-from lv.ailab.tezaurs.dbaccess.connection import db_connect
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.overview_querries import get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.exports.gf.gf_output import GFConcreteWriter, GFAbstractWriter
 from lv.ailab.tezaurs.exports.gf.gf_utils import GFUtils, GFPrintItem
@@ -23,9 +21,9 @@ implemented_paradigms = {
 if len(sys.argv) > 1:
     dbname = sys.argv[1]
 if dbname:
-    db_connection_info['dbname'] = dbname
+    DbConnectionInfo.dbname = dbname
 else:
-    dbname = db_connection_info['dbname']
+    dbname = DbConnectionInfo.dbname
 connection = db_connect()
 dict_version_data = get_dict_version(connection)
 dict_version = dict_version_data['tag']
@@ -107,7 +105,7 @@ sorting_funct = lambda x: sorted(result_lexemes_by_concrete[x].lemmas, key=lambd
 for (conc_expr, gf_pos) in sorted(result_lexemes_by_concrete.keys(), key=lambda x : (sorting_funct(x), x[1])):
     gf_lexeme_data = result_lexemes_by_concrete[(conc_expr, gf_pos)]
     lemma = sorted(gf_lexeme_data.lemmas, key=lambda y : y.lower())[0]
-    variable_postfix = GFUtils.BIG_SEPARATOR.join(str(id) for id in sorted(gf_lexeme_data.ids))
+    variable_postfix = GFUtils.BIG_SEPARATOR.join(str(lex_id) for lex_id in sorted(gf_lexeme_data.ids))
     variable_postfix = f"{variable_postfix}{GFUtils.BIG_SEPARATOR}{gf_pos}"
     synset_comment = GFUtils.form_synest_comment(gf_lexeme_data.synsets)
     if len(gf_lexeme_data.lemmas) > 1:

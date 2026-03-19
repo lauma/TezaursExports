@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import sys
 
-from lv.ailab.tezaurs.dbaccess.connection import db_connect
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.overview_querries import get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
@@ -20,9 +19,9 @@ print_tags = True
 if len(sys.argv) > 1:
     dbname = sys.argv[1]
 if dbname:
-    db_connection_info['dbname'] = dbname
+    DbConnectionInfo.dbname = dbname
 else:
-    dbname = db_connection_info['dbname']
+    dbname = DbConnectionInfo.dbname
 
 ili = IliMapping()
 connection = db_connect()

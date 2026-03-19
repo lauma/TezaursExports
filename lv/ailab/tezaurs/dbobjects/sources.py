@@ -1,8 +1,8 @@
 from typing import Generator, Optional
-from psycopg2.extras import NamedTupleCursor
+from psycopg2.extras import DictCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
 class DictSource:
@@ -15,19 +15,19 @@ class DictSource:
 
     @staticmethod
     def fetch_all_sources(connection : DbConnection) -> Generator[DictSource]:
-        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        cursor = connection.cursor(cursor_factory=DictCursor)
         sql_dict_sources = f"""
             SELECT abbr, title, url
-            FROM {db_connection_info['schema']}.sources
+            FROM {DbConnectionInfo.schema}.sources
             ORDER BY abbr ASC
         """
         cursor.execute(sql_dict_sources)
         while True:
-            rows = cursor.fetchmany(1000)
-            if not rows:
+            db_rows = cursor.fetchmany(1000)
+            if not db_rows:
                 break
-            for row in rows:
-                yield DictSource(row.abbr, row.title, row.url)
+            for row in db_rows:
+                yield DictSource(row['abbr'], row['title'], row['url'])
 
 
     @staticmethod
@@ -35,7 +35,7 @@ class DictSource:
                                 lexeme_id : Optional[int] = None, sense_id : Optional[int] = None) -> list[DictSource]:
         if not entry_id and not sense_id and not lexeme_id:
             return []
-        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        cursor = connection.cursor(cursor_factory=DictCursor)
         where_clause = ""
         if entry_id:
             where_clause = f"""entry_id = {entry_id}"""
@@ -49,8 +49,8 @@ class DictSource:
             where_clause = where_clause + f"""sense_id = {sense_id}"""
         sql_sources = f"""
     SELECT abbr, title, url, data->'sourceDetails' as details
-    FROM {db_connection_info['schema']}.source_links scl
-    JOIN {db_connection_info['schema']}.sources sc ON scl.source_id = sc.id
+    FROM {DbConnectionInfo.schema}.source_links scl
+    JOIN {DbConnectionInfo.schema}.sources sc ON scl.source_id = sc.id
     WHERE {where_clause}
     ORDER BY order_no
     """
@@ -59,7 +59,7 @@ class DictSource:
         if not sources:
             return []
         result = []
-        for source_row in sources:
-            source = DictSource(source_row.abbr, source_row.title, source_row.url, source_row.details)
+        for db_row in sources:
+            source = DictSource(db_row['abbr'], db_row['title'], db_row['url'], db_row['details'])
             result.append(source)
         return result

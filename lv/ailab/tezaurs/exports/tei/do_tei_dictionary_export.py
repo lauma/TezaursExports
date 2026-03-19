@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import sys
 
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.entries import Entry
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
-from lv.ailab.tezaurs.dbaccess.connection import db_connect
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.overview_querries import get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
 from lv.ailab.tezaurs.exports.tei.tei_output import TEIWriter
 from lv.ailab.tezaurs.exports.tei.whitelist import EntryWhitelist
 
@@ -33,9 +32,9 @@ do_entrylevel_exmples = False
 if len(sys.argv) > 1:
     dbname = sys.argv[1]
 if dbname:
-    db_connection_info['dbname'] = dbname
+    DbConnectionInfo.dbname = dbname
 else:
-    dbname = db_connection_info['dbname']
+    dbname = DbConnectionInfo.dbname
 
 if len(sys.argv) > 2:
     whitelist = EntryWhitelist()

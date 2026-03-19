@@ -1,9 +1,8 @@
 from typing import Optional
-
-from psycopg2.extras import NamedTupleCursor
+from psycopg2.extras import DictCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
 class Example:
@@ -22,10 +21,10 @@ class Example:
         where_clause = "sense_id"
         if entry_level_samples:
             where_clause = 'entry_id'
-        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        cursor = connection.cursor(cursor_factory=DictCursor)
         sql_samples = f"""
     SELECT id, content, data->>'CitedSource' as source, (data->>'TokenLocation')::int as location, hidden, reason_for_hiding
-    FROM {db_connection_info['schema']}.examples
+    FROM {DbConnectionInfo.schema}.examples
     WHERE {where_clause} = {parent_id} and (NOT hidden or reason_for_hiding='not-public')
     ORDER BY hidden, order_no
     """
@@ -34,8 +33,8 @@ class Example:
         if not samples:
             return []
         result = []
-        for db_sample in samples:
-            sample = Example(db_sample.id, db_sample.content, db_sample.hidden,
-                             db_sample.source, db_sample.location)
+        for db_row in samples:
+            sample = Example(db_row['id'], db_row['content'], db_row['hidden'],
+                             db_row['source'], db_row['location'])
             result.append(sample)
         return result

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-from lv.ailab.tezaurs.dbaccess.connection import db_connect
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.overview_querries import get_dict_version
+import json
+import sys
+import warnings
+
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.gram import combine_inherited_flags
 from lv.ailab.tezaurs.dbobjects.paradigms import Paradigm
 from lv.ailab.tezaurs.exports.tei.tei_output import TEIWriter
 from lv.ailab.tezaurs.exports.wordforms.json_wordform_utils import WordformReader
-import json
-import sys
-import warnings
+
 
 warn_multiple_inflsets = True
 skip_multiple_inflsets = False
@@ -25,9 +26,9 @@ wordform_list_path = "inflections.jsonl"
 if len(sys.argv) > 1:
     dbname = sys.argv[1]
 if dbname:
-    db_connection_info['dbname'] = dbname
+    DbConnectionInfo.dbname = dbname
 else:
-    dbname = db_connection_info['dbname']
+    dbname = DbConnectionInfo.dbname
 
 if len(sys.argv) > 2:
     wordform_list_path = sys.argv[2]

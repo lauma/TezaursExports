@@ -1,6 +1,7 @@
-from psycopg2.extras import NamedTupleCursor
+from psycopg2.extras import DictCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
+from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.gram import Flags
 
 
@@ -46,10 +47,10 @@ class Wordform:
     def fetch_wordforms(connection : DbConnection, lexeme_id : int) -> list[Wordform]:
         if not lexeme_id:
             return []
-        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        cursor = connection.cursor(cursor_factory=DictCursor)
         sql_wordforms = f"""
     SELECT id, form, data->'Gram'->'Flags' as flags, replaces_base
-    FROM dict.wordforms
+    FROM {DbConnectionInfo.schema}.wordforms
     WHERE lexeme_id = {lexeme_id}
     """
         cursor.execute(sql_wordforms)
@@ -57,6 +58,6 @@ class Wordform:
         if not wordforms:
             return []
         result = []
-        for wf in wordforms:
-            result.append(Wordform(wf.form, wf.replaces_base, wf.flags))
+        for db_row in wordforms:
+            result.append(Wordform(db_row['form'], db_row['replaces_base'], db_row['flags']))
         return result
