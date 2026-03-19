@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-from lv.ailab.tezaurs.dbaccess.connection import db_connect
-from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-
 import sys
 
+from lv.ailab.tezaurs.dbaccess.connection import db_connect
+from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
 from lv.ailab.tezaurs.dbaccess.overview_querries import get_dict_version
-from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_synseted_senses_by_lexeme
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
-from lv.ailab.tezaurs.dbobjects.senses import Synset
+from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
 from lv.ailab.tezaurs.exports.lmf.lmf_output import LMFWriter
 
@@ -36,7 +34,7 @@ with open(filename, 'w', encoding='utf8') as f:
     lmf_printer.print_head(wordnet_vers)
     try:
         for lexeme in Lexeme.fetch_all_synseted_lexemes(connection):
-            synset_senses = fetch_synseted_senses_by_lexeme(connection, lexeme.dbId)
+            synset_senses = Sense.fetch_synseted_senses_by_lexeme(connection, lexeme.dbId)
             lmf_printer.print_lexeme(lexeme, synset_senses, print_tags)
     except BaseException as err:
         print(f"Lexeme was: {lmf_printer.debug_id}")

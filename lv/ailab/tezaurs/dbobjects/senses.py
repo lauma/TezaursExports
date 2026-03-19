@@ -4,12 +4,9 @@ from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_synset_relations, \
-    fetch_exteral_synset_eq_relations, fetch_exteral_synset_neq_relations
-from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_gloss_entry_links, \
-    fetch_gloss_sense_links, fetch_semantic_derivs_by_sense
 from lv.ailab.tezaurs.dbobjects.examples import Example
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
+from lv.ailab.tezaurs.dbobjects.relations import NamedInternalRelation, ExternalRelation, GlossLink
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
 
@@ -22,15 +19,15 @@ class Sense:
         self.gloss : str = gloss
 
         self.synset : Optional[Synset] = None
-        self.gram : Optional[GramInfo] = None
+        self.gram : GramInfo = GramInfo()
 
         self.examples : list[Example] = []
         self.subsenses : list[Sense] = []
         self.sources : list[DictSource] = []
 
-        self.semanticDerivatives = None
-        self.glossToEntryLinks = None
-        self.glossToSenseLinks = None
+        self.semanticDerivatives : list[NamedInternalRelation] = []
+        self.glossToEntryLinks : dict[int, GlossLink] = {}
+        self.glossToSenseLinks : dict[int, GlossLink] = {}
 
 
     @staticmethod
@@ -60,19 +57,19 @@ class Sense:
                 sense.synset = Synset(
                     sense_data.synset_id,
                     Sense.fetch_synset_senses(connection, sense_data.synset_id),
-                    fetch_synset_relations(connection, sense_data.synset_id),
+                    NamedInternalRelation.fetch_synset_relations(connection, sense_data.synset_id),
                     Gradset.fetch_gradset(connection, sense_data.synset_id),
-                    fetch_exteral_synset_eq_relations(connection, sense_data.synset_id),
-                    fetch_exteral_synset_neq_relations(connection, sense_data.synset_id))
+                    ExternalRelation.fetch_exteral_synset_eq_relations(connection, sense_data.synset_id),
+                    ExternalRelation.fetch_exteral_synset_neq_relations(connection, sense_data.synset_id))
             sense.subsenses = Sense.fetch_senses(connection, entry_id, sense_data.id)
             sense.examples = Example.fetch_examples(connection, sense_data.id)
-            sense.semanticDerivatives = fetch_semantic_derivs_by_sense(connection, sense_data.id)
+            sense.semanticDerivatives = NamedInternalRelation.fetch_semantic_derivs_by_sense(connection, sense_data.id)
             sense.sources = DictSource.fetch_sources_by_esl_id(connection, None, None, sense_data.id)
 
             if regex.search(r'\[((?:\p{L}\p{M}*)+)\]\{e:\d+\}', sense_data.gloss):
-                sense.glossToEntryLinks = fetch_gloss_entry_links(connection, sense_data.id)
+                sense.glossToEntryLinks = GlossLink.fetch_gloss_entry_links(connection, sense_data.id)
             if regex.search(r'\[((?:\p{L}\p{M}*)+)\]\{s:\d+\}', sense_data.gloss):
-                sense.glossToSenseLinks = fetch_gloss_sense_links(connection, sense_data.id)
+                sense.glossToSenseLinks = GlossLink.fetch_gloss_sense_links(connection, sense_data.id)
 
             result.append(sense)
         return result
@@ -84,7 +81,7 @@ class Sense:
             return []
         cursor = connection.cursor(cursor_factory=NamedTupleCursor)
         sql_synset_senses = f"""
-    SELECT syn.id, s.id as sense_id, s.order_no as sense_no, s.gloss as gloss, s.hidden,
+    SELECT syn.id, s.id as sense_id, s.order_no as sense_no, s.gloss, s.hidden,
            sp.order_no as parent_sense_no, e.human_key as entry_hk
     FROM {db_connection_info['schema']}.synsets syn
     RIGHT OUTER JOIN dict.senses s ON syn.id = s.synset_id
@@ -111,15 +108,38 @@ class Sense:
         return result
 
 
+    @staticmethod
+    def fetch_synseted_senses_by_lexeme(connection : DbConnection, lexeme_id : int) -> list[Sense]:
+        cursor = connection.cursor(cursor_factory=NamedTupleCursor)
+        sql_senses = f"""
+    SELECT s.id as sense_id, s.order_no, s.gloss, s.hidden, s.synset_id
+    FROM {db_connection_info['schema']}.senses s
+    JOIN {db_connection_info['schema']}.lexemes l on s.entry_id = l.entry_id
+    WHERE l.id = {lexeme_id} AND s.synset_id<>0 AND (NOT s.hidden OR s.reason_for_hiding='not-public')
+    """
+        cursor.execute(sql_senses)
+        senses = cursor.fetchall()
+        if not senses:
+            return []
+        result = []
+        for s in senses:
+            sense = Sense(s.sense_id, s.order_no, s.gloss, s.hidden)
+            if s.synset_id:
+                sense.synset = Synset(s.synset_id, None)
+            result.append(sense)
+            #result.append({'sense_id': s.sense_id, 'synset_id': s.synset_id})
+        return result
+
+
 
 class Synset:
-    def __init__ (self, db_id, senses, relations, gradset, ext_eq_rels, ext_neq_rels = None):
+    def __init__ (self, db_id, senses, relations = None, gradset = None, ext_eq_rels = None, ext_neq_rels = None):
         self.dbId : int = db_id
         self.senses : list[Sense] = senses
-        self.relations = relations
-        self.gradset : Gradset = gradset
-        self.externalEqRelations = ext_eq_rels
-        self.externalNeqRelations = ext_neq_rels
+        self.relations : list[NamedInternalRelation] = [] if relations is None else relations
+        self.gradset : Optional[Gradset] = gradset
+        self.externalEqRelations : list[ExternalRelation] = [] if ext_eq_rels is None else ext_eq_rels
+        self.externalNeqRelations : list[ExternalRelation] = [] if ext_neq_rels is None else ext_neq_rels
 
 
     @staticmethod
@@ -142,10 +162,10 @@ class Synset:
                 counter = counter + 1
                 yield Synset (row.id,
                               Sense.fetch_synset_senses(connection, row.id),
-                              fetch_synset_relations(connection, row.id),
+                              NamedInternalRelation.fetch_synset_relations(connection, row.id),
                               Gradset.fetch_gradset(connection, row.id),
-                              fetch_exteral_synset_eq_relations(connection, row.id, filter_ext_rel_by),
-                              fetch_exteral_synset_neq_relations(connection, row.id, filter_ext_rel_by))
+                              ExternalRelation.fetch_exteral_synset_eq_relations(connection, row.id, filter_ext_rel_by),
+                              ExternalRelation.fetch_exteral_synset_neq_relations(connection, row.id, filter_ext_rel_by))
             print(f'synsets: {counter}\r')
 
 

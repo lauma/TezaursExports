@@ -38,6 +38,14 @@ class GramInfo:
         self.stemPast: Optional[str] = None
 
 
+    def is_empty(self) -> bool:
+        if (self.flags or self.paradigmFlags or self.structuralRestrictions
+                or self.inflectionText or self.freeText
+                or self.paradigmName or self.stemInfinity or self.stemPresent or self.stemPast):
+            return False
+        return True
+
+
     def set_paradigm_data(self, from_element : NamedTuple):
         if hasattr(from_element, 'paradigm') and from_element.paradigm:
             self.paradigmName = from_element.paradigm

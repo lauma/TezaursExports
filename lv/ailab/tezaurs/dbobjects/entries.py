@@ -3,10 +3,10 @@ from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.single_entry_queries import fetch_morpho_derivs
 from lv.ailab.tezaurs.dbobjects.examples import Example
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
+from lv.ailab.tezaurs.dbobjects.relations import NamedInternalRelation
 from lv.ailab.tezaurs.dbobjects.senses import Sense
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
@@ -21,14 +21,13 @@ class Entry:
         self.headword : str = headword
         self.etymology : Optional[str] = None
 
-        self.gram : Optional[GramInfo] = None
+        self.gram : GramInfo = GramInfo()
 
         self.lexemes : list [Lexeme] = []
         self.senses : list[Sense] = []
         self.examples : list[Example] = []
         self.sources : list[DictSource] = []
-
-        self.morphoDerivatives = None
+        self.morphoDerivatives : list[NamedInternalRelation] = []
 
     @staticmethod
     def fetch_all_entries(connection : DbConnection, omit_mwe : bool = False, omit_wordparts : bool = False,
@@ -79,7 +78,7 @@ class Entry:
                 if do_entrylevel_exmples:
                     result.examples = Example.fetch_examples(connection, row.id, True)
                 result.sources = DictSource.fetch_sources_by_esl_id(connection, row.id)
-                morpho_derivs = fetch_morpho_derivs(connection, row.id)
+                morpho_derivs = NamedInternalRelation.fetch_morpho_derivs(connection, row.id)
                 if morpho_derivs:
                     result.morphoDerivatives = morpho_derivs
                 yield result

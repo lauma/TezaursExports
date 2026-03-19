@@ -4,9 +4,9 @@ from psycopg2.extras import NamedTupleCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import db_connection_info
-from lv.ailab.tezaurs.dbaccess.single_synset_queries import fetch_exteral_synset_eq_relations
-from lv.ailab.tezaurs.dbaccess.subentry_queries import fetch_synseted_senses_by_lexeme
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
+from lv.ailab.tezaurs.dbobjects.relations import ExternalRelation
+from lv.ailab.tezaurs.dbobjects.senses import Sense
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 from lv.ailab.tezaurs.dbobjects.wordforms import Wordform
 
@@ -149,12 +149,12 @@ class Lexeme:
                 result = Lexeme(row.id, row.lemma, row.hidden)
                 result.gramInfo = GramInfo.extract_gram(row)
                 result.wordforms = Wordform.fetch_wordforms(connection, row.id)
-                synset_senses = fetch_synseted_senses_by_lexeme(connection, row.id)
-                synset_ids = set(map(lambda a: a['synset_id'] if 'synset_id' in a else {},
+                synset_senses = Sense.fetch_synseted_senses_by_lexeme(connection, row.id)
+                synset_ids = set(map(lambda a: a.synset.dbId if a.synset else {},
                                      synset_senses)) if synset_senses else {}
-                external_synset_ids = set(map(lambda a: a['id'], reduce(
+                external_synset_ids = set(map(lambda a: a.remoteId, reduce(
                     lambda a, b: a + b,
-                    map(lambda a: fetch_exteral_synset_eq_relations(connection, a), synset_ids),
+                    map(lambda a: ExternalRelation.fetch_exteral_synset_eq_relations(connection, a), synset_ids),
                     [])))
                 result.synsetIds = synset_ids
                 result.externalSynsetIds = external_synset_ids

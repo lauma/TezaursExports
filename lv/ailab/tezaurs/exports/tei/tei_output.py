@@ -5,6 +5,7 @@ from lv.ailab.tezaurs.dbobjects.entries import Entry
 from lv.ailab.tezaurs.dbobjects.examples import Example
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo, Flags
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
+from lv.ailab.tezaurs.dbobjects.relations import NamedInternalRelation, GlossLink
 from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 from lv.ailab.tezaurs.utils.dict.gloss_normalization import mandatory_normalization, full_cleanup
@@ -22,7 +23,9 @@ class TEIWriter(XMLWriter):
         self.dict_version = dict_version
 
 
-    def _do_smart_leaf_node(self, name, attrs, content, ge_links=None, gs_links=None):
+    def _do_smart_leaf_node(self, name : str, attrs : dict[str, str], content : str,
+                            ge_links : Optional[dict[int, GlossLink]] = None,
+                            gs_links : Optional[dict[int, GlossLink]] = None):
         self.gen.ignorableWhitespace(self.indent_chars * self.xml_depth)
         self.gen.startElement(name, attrs)
         self._do_content_with_mentions_glosslinks(content, ge_links, gs_links)
@@ -30,7 +33,9 @@ class TEIWriter(XMLWriter):
         self.gen.ignorableWhitespace(self.newline_chars)
 
 
-    def _do_content_with_mentions_glosslinks(self, content, ge_links=None, gs_links=None):
+    def _do_content_with_mentions_glosslinks(self, content : str,
+                                             ge_links : Optional[dict[int, GlossLink]] = None,
+                                             gs_links : Optional[dict[int, GlossLink]] = None):
         # parts = regex.split('</?(?:em|i)>', content)
         underscore_count = len(regex.findall(r'(?<!\\)_', content))
         if underscore_count % 2 > 0:
@@ -52,7 +57,9 @@ class TEIWriter(XMLWriter):
                 is_mentioned = True
 
 
-    def _do_content_with_glosslinks(self, content, ge_links=None, gs_links=None):
+    def _do_content_with_glosslinks(self, content : str,
+                                    ge_links : Optional[dict[int, GlossLink]] = None,
+                                    gs_links : Optional[dict[int, GlossLink]] = None):
         if not ge_links and not gs_links:
             self.gen.characters(full_cleanup(content))
         else:
@@ -71,13 +78,13 @@ class TEIWriter(XMLWriter):
                         print(
                             f'Invalid gloss link {link_type}:{link_id} in entry {self.debug_entry_id}'
                             + f' (available links {ge_links}).\n')
-                    link_ref = ge_links[link_id]
+                    link_ref = ge_links[link_id].targetSoftId
                 elif link_type == 's':
                     if not gs_links.get(link_id):
                         print(
                             f'Invalid gloss link {link_type}:{link_id} in entry {self.debug_entry_id}'
                             + f' (available links {gs_links}).\n')
-                    link_ref = gs_links[link_id]['softid']
+                    link_ref = gs_links[link_id].targetSoftId
                 else:
                     print(f'Empty gloss link {link_type}:{link_id} in entry {self.debug_entry_id}\n')
                 if link_ref:
@@ -271,9 +278,8 @@ class TEIWriter(XMLWriter):
                 self.print_example(example)
         if entry.etymology:
             self._do_smart_leaf_node('etym', {}, mandatory_normalization(entry.etymology))
-        if entry.morphoDerivatives:
-            for deriv in entry.morphoDerivatives:
-                self.print_morpho_deriv(deriv)
+        for deriv in entry.morphoDerivatives:
+            self.print_morpho_deriv(deriv)
         if entry.sources:
             self.print_esl_sources(entry.sources)
         self.end_node('entry')
@@ -443,27 +449,26 @@ class TEIWriter(XMLWriter):
         self.end_node('listBibl')
 
 
-    def print_sem_deriv(self, sem_deriv):
+    def print_sem_deriv(self, sem_deriv : NamedInternalRelation):
         xr_attr = {'type': 'derivative', 'subtype': 'semantics'}
-        if sem_deriv['hidden']:
+        if sem_deriv.hidden:
             xr_attr['rend'] = 'hidden'
         self.start_node('xr', xr_attr)
-        self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{sem_deriv["my_role"]}')
-        self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{sem_deriv["target_role"]}')
-        self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/{sem_deriv["target_softid"]}'})
+        self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{sem_deriv.myRole}')
+        self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{sem_deriv.targetRole}')
+        self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/{sem_deriv.targetSoftId}'})
         self.end_node('xr')
 
 
-    def print_morpho_deriv(self, morpho_deriv):
+    def print_morpho_deriv(self, morpho_deriv : NamedInternalRelation):
         xr_attr = {'type': 'derivative', 'subtype': 'morphology'}
-        if morpho_deriv['hidden']:
+        if morpho_deriv.hidden:
             xr_attr['rend'] = 'hidden'
         self.start_node('xr', {'type': 'derivative', 'subtype': 'morphology'})
-        self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{morpho_deriv["my_role"]}')
-        self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{morpho_deriv["target_role"]}')
-        self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/{morpho_deriv["target_softid"]}'})
-        if 'gram' in morpho_deriv:
-            self.print_gram(morpho_deriv['gram'], 'desc')
+        self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{morpho_deriv.myRole}')
+        self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{morpho_deriv.targetRole}')
+        self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/{morpho_deriv.targetSoftId}'})
+        self.print_gram(morpho_deriv.gramInfo, 'desc')
         self.end_node('xr')
 
 
@@ -473,37 +478,35 @@ class TEIWriter(XMLWriter):
             for sense in synset.senses:
                 # TODO use hard ids when those are fixed
                 self.do_simple_leaf_node('ref', {'type': 'synsetMember', 'target': f'{self.dict_version}/{sense.calculatedHumanId}'})
-            if synset.externalEqRelations:
+            if len(synset.externalEqRelations) > 0:
                 pnw_id = None
                 for relation in synset.externalEqRelations:
-                    if relation['type'] == 'pwn-3.0':
-                        pnw_id = relation['id']
+                    if relation.type == 'pwn-3.0':
+                        pnw_id = relation.remoteId
                     self.do_simple_leaf_node(
-                        'ref', {'type': 'externalEqualent', 'subtype': relation['desc'], 'target': relation['id']})
+                        'ref', {'type': 'externalEqualent', 'subtype': relation.desctiption, 'target': relation.remoteId})
 
                 if ili_map and pnw_id is not None:
                     ili = ili_map.get_mapping(pnw_id)
                     self.do_simple_leaf_node(
                         'ref', {'type': 'externalEqualent', 'subtype': 'Open Multilingual Wordnet', 'target': ili})
-            if synset.externalNeqRelations:
-                for relation in synset.externalNeqRelations:
-                    scope = relation['scope']
-                    if scope.startswith('eq_has_'):
-                        scope = scope[7:8].capitalize() + scope[8:]
-                    self.do_simple_leaf_node(
-                        'ref', {'type': f'external{scope}', 'subtype': relation['desc'], 'target': relation['id']})
+            for relation in synset.externalNeqRelations:
+                scope = relation.scope
+                if scope.startswith('eq_has_'):
+                    scope = scope[7:8].capitalize() + scope[8:]
+                self.do_simple_leaf_node(
+                    'ref', {'type': f'external{scope}', 'subtype': relation.desctiption, 'target': relation.remoteId})
             self.end_node('xr')
 
-        if synset.relations:
-            for relation in synset.relations:
-                xr_attr = {'type': f'{relation["relation"]}'}
-                if relation['hidden']:
-                    xr_attr['rend'] = 'hidden'
-                self.start_node('xr', xr_attr)
-                self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{relation["my_role"]}')
-                self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{relation["target_role"]}')
-                self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/synset:{relation["target_id"]}'})
-                self.end_node('xr')
+        for relation in synset.relations:
+            xr_attr = {'type': f'{relation.relationLabel}'}
+            if relation.hidden:
+                xr_attr['rend'] = 'hidden'
+            self.start_node('xr', xr_attr)
+            self.do_simple_leaf_node('lbl', {'type': 'this'}, f'{relation.myRole}')
+            self.do_simple_leaf_node('lbl', {'type': 'target'}, f'{relation.targetRole}')
+            self.do_simple_leaf_node('ref', {'target': f'{self.dict_version}/synset:{relation.targetDbId}'})
+            self.end_node('xr')
 
         if synset.gradset:
             self.start_node('xr',
