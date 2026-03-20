@@ -79,7 +79,7 @@ for lexeme in Lexeme.fetch_all_lexemes_with_paradigms_and_synsets(connection):
         continue
 
     # Here we add custom vocatives
-    if len(lexeme.wordforms) > 0:
+    if lexeme.wordforms:
         if gf_pos != "N":
             print(f'Skipping {lexeme.lemma} because don\'t know, how to add vocatives to {gf_pos} type!')
             continue

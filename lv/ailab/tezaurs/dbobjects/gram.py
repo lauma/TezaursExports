@@ -1,6 +1,7 @@
 from typing import Optional, Iterable
 from psycopg2.extras import DictRow
 
+from lv.ailab.tezaurs.dbaccess.connection import JsonData
 from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoAttr
 
 
@@ -30,7 +31,7 @@ class GramInfo:
     def __init__(self):
         self.flags : Flags = {}
         self.paradigmFlags : Flags = {}
-        self.structuralRestrictions = None
+        self.structuralRestrictions : JsonData = {}
         self.inflectionText : Optional[str] = None
         self.freeText : Optional[str] = None
 

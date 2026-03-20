@@ -9,7 +9,7 @@ class Paradigm:
     def __init__(self, db_id, paradigm_name, flags):
         self.dbId : int = db_id
         self.name : str = paradigm_name
-        self.flags : Flags = flags
+        self.flags : Flags = {} if flags is None else flags
 
     @staticmethod
     def fetch_all_paradigms(connection : DbConnection) -> dict[str, Paradigm]:

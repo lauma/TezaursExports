@@ -249,10 +249,10 @@ class TEIWriter(XMLWriter):
         elif entry.type == 'wordPart':
             entry_xml_attrs['type'] = 'affix'  # FIXME
         #elif main_lexeme.lemma and 'pos' in main_lexeme and 'Saīsinājums' in main_lexeme['pos'] or 'paradigm' in main_lexeme and main_lexeme['paradigm']['id'] == 'abbr':
-        elif main_lexeme.gramInfo and (main_lexeme.gramInfo.paradigmName == 'abbr'
-                or MorphoAttr.POS in main_lexeme.gramInfo.flags and main_lexeme.gramInfo.flags[MorphoAttr.POS] == MorphoVal.ABBR ):
+        elif (main_lexeme.gramInfo.paradigmName == 'abbr'
+              or MorphoAttr.POS in main_lexeme.gramInfo.flags and main_lexeme.gramInfo.flags[MorphoAttr.POS] == MorphoVal.ABBR) :
             entry_xml_attrs['type'] = 'abbr'
-        elif main_lexeme.gramInfo and (main_lexeme.gramInfo.paradigmName == 'foreign'
+        elif (main_lexeme.gramInfo.paradigmName == 'foreign'
                 or MorphoAttr.POS in main_lexeme.gramInfo.flags
                    and main_lexeme.gramInfo.flags[MorphoAttr.POS] == MorphoVal.FOREIGN
                 or MorphoAttr.RESIDUAL_TYPE in main_lexeme.gramInfo.flags
@@ -270,12 +270,10 @@ class TEIWriter(XMLWriter):
         for lexeme in entry.lexemes:
             self.print_lexeme(lexeme, f'{self.dict_version}/{entry.dbId}', entry.headword, entry.type, is_first)
             is_first = False
-        if len(entry.senses) > 0:
-            for sense in entry.senses:
-                self.print_sense(sense, f'{self.dict_version}/{entry.dbId}', ili_map)
-        if len(entry.examples) > 0:
-            for example in entry.examples:
-                self.print_example(example)
+        for sense in entry.senses:
+            self.print_sense(sense, f'{self.dict_version}/{entry.dbId}', ili_map)
+        for example in entry.examples:
+            self.print_example(example)
         if entry.etymology:
             self._do_smart_leaf_node('etym', {}, mandatory_normalization(entry.etymology))
         for deriv in entry.morphoDerivatives:
@@ -313,8 +311,9 @@ class TEIWriter(XMLWriter):
 
 
     def print_gram(self, gram : GramInfo, wraper_elem_name : Optional[str] = None):
-        if not gram.flags and not gram.structuralRestrictions and \
-                not gram.freeText and not gram.inflectionText:
+        #if not gram.flags and not gram.structuralRestrictions and \
+        #        not gram.freeText and not gram.inflectionText:
+        if gram.is_empty():
             return
 
         if wraper_elem_name:
@@ -329,11 +328,11 @@ class TEIWriter(XMLWriter):
         elif gram.inflectionText:
             self.do_simple_leaf_node('iType', {}, prettify_text_with_pronunciation(gram.inflectionText))
 
-        if gram.flags and len(gram.flags) > 0:
+        if gram.flags:
             self.print_flags(gram.flags)
         if gram.structuralRestrictions:
             self.print_struct_restr(gram.structuralRestrictions)
-        if (not gram.flags or len(gram.flags) < 1 ) and not gram.structuralRestrictions and gram.freeText:
+        if not gram.flags and not gram.structuralRestrictions and gram.freeText:
             self.do_simple_leaf_node('gram', {}, prettify_text_with_pronunciation(gram.freeText))
 
         self.end_node('gramGrp')
@@ -343,10 +342,11 @@ class TEIWriter(XMLWriter):
 
     # TODO piesaistīt karoga anglisko nosaukumu
     def print_flags(self, flags : Flags, ignored_flags : Optional[set[str]] = None):
-        if ignored_flags is None:
-            ignored_flags = {}
         if not flags:
             return
+        if ignored_flags is None:
+            ignored_flags = {}
+
         self.start_node('gramGrp', {'type': 'properties'})
         for key in sorted(flags.keys()):
             if not key in ignored_flags:
@@ -410,7 +410,7 @@ class TEIWriter(XMLWriter):
 
 
     def print_example(self, example : Example):
-        if len(example.text) < 1:
+        if not example.text:
             return
         cit_attr = {'type': 'example'}
         if example.hidden:
@@ -473,7 +473,7 @@ class TEIWriter(XMLWriter):
 
 
     def print_synset_related(self, synset : Synset, ili_map : IliMapping):
-        if len(synset.senses) > 0:
+        if synset.senses:
             self.start_node('xr', {'type': 'synset', 'id': f'{self.dict_version}/synset:{synset.dbId}'})
             for sense in synset.senses:
                 # TODO use hard ids when those are fixed

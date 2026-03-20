@@ -5,6 +5,7 @@ from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
 type DbConnection = psycopg2._psycopg.connection
+type JsonData = dict[str,JsonData|list[JsonData|str]]
 
 
 def db_connect() -> DbConnection:

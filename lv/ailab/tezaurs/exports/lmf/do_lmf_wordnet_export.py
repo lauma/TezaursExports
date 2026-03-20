@@ -42,7 +42,7 @@ with open(filename, 'w', encoding='utf8') as f:
         for synset in Synset.fetch_all_synsets(connection, 'pwn-3.0'):
             synset_lexemes = Lexeme.fetch_synset_lexemes(connection, synset.dbId)
             # Drukās netukšos sinsetus, šobrīd tas nozīmē, ka vajag definīciju un leksēmu.
-            if synset.senses and len(synset.senses) > 0 and synset_lexemes:
+            if synset.senses and synset_lexemes:
                 lmf_printer.print_synset(synset, synset_lexemes, ili)
     except BaseException as err:
         print(f"Synset was: {lmf_printer.debug_id}")

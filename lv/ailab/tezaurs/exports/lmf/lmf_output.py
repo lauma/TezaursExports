@@ -42,7 +42,7 @@ class LMFWriter(XMLWriter):
         lmfpos = LMFWriter.lmfiy_pos(pos, abbr_pos, lexeme.lemma)
         lemma_params = {'writtenForm': lexeme.lemma, 'partOfSpeech': lmfpos}
         self.do_simple_leaf_node('Lemma', lemma_params)
-        if print_tags and lexeme.gramInfo:
+        if print_tags:
             paradigm_text = lexeme.gramInfo.get_paradigm_text()
             if paradigm_text:
                 self.do_simple_leaf_node('Tag', {}, paradigm_text)

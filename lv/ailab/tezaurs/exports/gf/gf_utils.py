@@ -109,7 +109,7 @@ class GFUtils:
     @staticmethod
     def form_N_with_vocative_extension(lexeme : Lexeme, paradigm_expr : str,
                                        gender : str = None) -> Optional[str]:
-        if len(lexeme.wordforms) < 1:
+        if not lexeme.wordforms:
             return None
         sg_voc_wfs, leftover_wordforms = Wordform.filter_wordform_list(
             lexeme.wordforms, {MorphoAttr.NUMBER: MorphoVal.SINGULAR, MorphoAttr.CASE: MorphoVal.VOCATIVE})
