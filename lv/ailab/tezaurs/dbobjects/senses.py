@@ -11,7 +11,7 @@ from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
 
 class Sense:
-    def __init__(self, db_id, ord_no, gloss, hidden):
+    def __init__(self, db_id : int, ord_no : int, gloss : str, hidden : bool):
         self.dbId : int = db_id
         self.calculatedHumanId : Optional[str] = None
         self.orderNo : int = ord_no
@@ -31,8 +31,7 @@ class Sense:
 
 
     @staticmethod
-    def fetch_senses(connection : DbConnection, entry_id : int, parent_sense_id : int = None)\
-            -> list[Sense]:
+    def fetch_senses(connection : DbConnection, entry_id : int, parent_sense_id : int = None) -> list[Sense]:
         cursor = connection.cursor(cursor_factory=DictCursor)
         parent_sense_clause = 'is NULL'
         if parent_sense_id:
@@ -133,7 +132,11 @@ class Sense:
 
 
 class Synset:
-    def __init__ (self, db_id, senses, relations = None, gradset = None, ext_eq_rels = None, ext_neq_rels = None):
+    def __init__ (self, db_id : int, senses : list[Sense],
+                  relations : Optional[list[NamedInternalRelation]] = None,
+                  gradset : Optional[Gradset] = None,
+                  ext_eq_rels : Optional[list[ExternalRelation]] = None,
+                  ext_neq_rels : Optional[list[ExternalRelation]] = None):
         self.dbId : int = db_id
         self.senses : list[Sense] = senses
         self.relations : list[NamedInternalRelation] = [] if relations is None else relations
@@ -172,7 +175,7 @@ class Synset:
 
 
 class Gradset:
-    def __init__(self, db_id, gradset_category, member_synset_ids):
+    def __init__(self, db_id : int, gradset_category : str, member_synset_ids : list[int]):
         self.dbId : int = db_id
         self.category : str = gradset_category
         self.memberIds : list[int] = member_synset_ids

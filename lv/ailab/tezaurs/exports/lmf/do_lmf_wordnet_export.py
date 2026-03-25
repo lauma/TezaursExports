@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
-from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version, DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
@@ -9,12 +9,12 @@ from lv.ailab.tezaurs.utils.dict.ili import IliMapping
 from lv.ailab.tezaurs.exports.lmf.lmf_output import LMFWriter
 
 # TODO: izrunas, LMF POS no tēzaura vārdšķiras
-wordnet_id = 'wordnet_lv'
-wordnet_vers = '1.0'
-connection = None
-dbname = None
-dict_version = None
-print_tags = True
+wordnet_id : str = 'wordnet_lv'
+wordnet_vers : str = '1.0'
+connection : DbConnection
+dbname : str = ''
+dict_version : str
+print_tags : bool = True
 
 if len(sys.argv) > 1:
     dbname = sys.argv[1]

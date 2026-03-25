@@ -12,7 +12,7 @@ from lv.ailab.tezaurs.dbobjects.wordforms import Wordform
 
 
 class Lexeme:
-    def __init__(self, db_id, lemma, hidden, lexeme_type = None):
+    def __init__(self, db_id : int, lemma : str, hidden : bool, lexeme_type : Optional[str] = None):
         self.dbId : int = db_id
         self.lemma : str = lemma
         self.type : Optional[str] = lexeme_type

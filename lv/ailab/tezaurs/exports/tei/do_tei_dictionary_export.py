@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import sys
+from typing import Optional
 
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.entries import Entry
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
-from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version, DbConnection
 from lv.ailab.tezaurs.exports.tei.tei_output import TEIWriter
 from lv.ailab.tezaurs.exports.tei.whitelist import EntryWhitelist
 
@@ -15,18 +16,18 @@ from lv.ailab.tezaurs.exports.tei.whitelist import EntryWhitelist
 # - homonym grouping
 # - migrate to hard sense IDs
 
-connection = None
-dbname = None
-dict_version = None
-whitelist = None
+connection : DbConnection
+dbname : str = ''
+dict_version : str
+whitelist : Optional[EntryWhitelist] = None
 
-omit_wordparts = False
-omit_pot_wordparts = False
-omit_mwe = False
+omit_wordparts : bool = False
+omit_pot_wordparts : bool = False
+omit_mwe : bool = False
 
-do_free_texts = False
-do_inflection_texts = False
-do_entrylevel_exmples = False
+do_free_texts : bool = False
+do_inflection_texts : bool = False
+do_entrylevel_exmples : bool = False
 
 
 if len(sys.argv) > 1:
@@ -62,7 +63,7 @@ with open(filename, 'w', encoding='utf8') as out:
         for entry in Entry.fetch_all_entries(connection, omit_mwe, omit_wordparts, omit_pot_wordparts, do_entrylevel_exmples):
             tei_printer.print_entry(entry, ili_map)
     except BaseException as err:
-        print("Entry was: " + tei_printer.debug_entry_id)
+        print(f"Entry was: {tei_printer.debug_entry_id}")
         raise
     tei_printer.print_back_matter(dict_version_data['dictionary'], DictSource.fetch_all_sources(connection))
     tei_printer.print_tail(dict_version_data['dictionary'])

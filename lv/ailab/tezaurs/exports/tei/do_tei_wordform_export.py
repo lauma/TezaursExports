@@ -3,7 +3,7 @@ import json
 import sys
 import warnings
 
-from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version, DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.gram import combine_inherited_flags
 from lv.ailab.tezaurs.dbobjects.paradigms import Paradigm
@@ -11,17 +11,17 @@ from lv.ailab.tezaurs.exports.tei.tei_output import TEIWriter
 from lv.ailab.tezaurs.exports.wordforms.json_wordform_utils import WordformReader
 
 
-warn_multiple_inflsets = True
-skip_multiple_inflsets = False
+warn_multiple_inflsets : bool = True
+skip_multiple_inflsets : bool = False
 # Šobrīd vairāki locījumu komplekti ir tikai gadījumos, kad saīsinājumu kļūdaini sadala divās
 # tekstvienībās, tāpēc labāk ir tos visus izlaist. Šis jāmaina, kad salabos saīsinājumus.
 
 # DB connection is only needed for general dictionary info and paradigm flags, all the rest comes from JSON files.
-connection = None
-dbname = None
-dict_version = None
-paradigms = None
-wordform_list_path = "inflections.jsonl"
+connection : DbConnection
+dbname : str = ''
+dict_version : str
+paradigms : dict [str, Paradigm]
+wordform_list_path : str = "inflections.jsonl"
 
 if len(sys.argv) > 1:
     dbname = sys.argv[1]
@@ -32,7 +32,7 @@ else:
 
 if len(sys.argv) > 2:
     wordform_list_path = sys.argv[2]
-wordform_source = WordformReader(wordform_list_path, False)
+wordform_source :WordformReader = WordformReader(wordform_list_path, False)
 
 connection = db_connect()
 dict_version_data = get_dict_version(connection)

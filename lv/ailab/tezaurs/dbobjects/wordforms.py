@@ -6,7 +6,7 @@ from lv.ailab.tezaurs.dbobjects.gram import Flags
 
 
 class Wordform:
-    def __init__(self, form, replaces_base, flags):
+    def __init__(self, form : str, replaces_base : bool, flags : Flags):
         self.form : str = form
         self.replacesBase : bool = replaces_base
         self.flags : Flags = {} if flags is None else flags
@@ -21,7 +21,8 @@ class Wordform:
 
     # Returns tuple, first element is matching part of the set, second is non-matching
     @staticmethod
-    def filter_wordform_list(source_set : list[Wordform], filter_attributes : Flags) -> tuple[list[Wordform], list[Wordform]]:
+    def filter_wordform_list(source_set : list[Wordform], filter_attributes : Flags)\
+            -> tuple[list[Wordform], list[Wordform]]:
         if not source_set or not filter_attributes:
             return source_set, []
 

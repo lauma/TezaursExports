@@ -6,7 +6,8 @@ from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
 class DictSource:
-    def __init__(self, abbreviation, title, url=None, details=None):
+    def __init__(self, abbreviation : str, title : str, url : Optional[str] = None,
+                 details : Optional[str] = None):
         self.abbreviation : str = abbreviation
         self.title : str = title
         self.details : Optional[str] = details

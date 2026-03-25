@@ -13,7 +13,7 @@ from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
 
 class Entry:
-    def __init__(self, db_id, homonym, entry_type, headword, hidden):
+    def __init__(self, db_id : int, homonym : int, entry_type : str, headword : str, hidden : bool):
         self.dbId : int = db_id
         self.hidden : bool = hidden
 

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import sys
 
-from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version
+from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version, DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.exports.gf.gf_output import GFConcreteWriter, GFAbstractWriter
 from lv.ailab.tezaurs.exports.gf.gf_utils import GFUtils, GFPrintItem
 from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoVal, MorphoAttr
 
-connection = None
-dbname = None
-dict_version = None
-implemented_paradigms = {
+connection : DbConnection
+dbname : str = ''
+dict_version : str
+implemented_paradigms : set[str] = {
             "noun-1a", "noun-1b", "noun-2a", "noun-2b", "noun-2c", "noun-2d",
 			"noun-3f", "noun-3m", "noun-4f", "noun-4m", "noun-5fa", "noun-5fb",
 			"noun-5ma", "noun-5mb", "noun-6a", "noun-6b",

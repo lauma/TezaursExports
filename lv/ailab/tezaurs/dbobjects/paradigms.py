@@ -6,7 +6,7 @@ from lv.ailab.tezaurs.dbobjects.gram import Flags
 
 
 class Paradigm:
-    def __init__(self, db_id, paradigm_name, flags):
+    def __init__(self, db_id : int, paradigm_name : str, flags : Flags):
         self.dbId : int = db_id
         self.name : str = paradigm_name
         self.flags : Flags = {} if flags is None else flags

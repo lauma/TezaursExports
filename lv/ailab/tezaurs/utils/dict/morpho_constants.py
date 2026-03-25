@@ -1,37 +1,37 @@
 # TODO savienot šo ar tagset.xml no morfoloģijas
 class MorphoAttr:
-    POS = "Vārdšķira"
+    POS : str = "Vārdšķira"
 
-    NUMBER = "Skaitlis"
+    NUMBER : str = "Skaitlis"
 
-    GENDER = "Dzimte"
+    GENDER : str = "Dzimte"
 
-    CASE = "Locījums"
+    CASE : str = "Locījums"
 
-    NOUN_TYPE = "Lietvārda tips"
+    NOUN_TYPE : str = "Lietvārda tips"
 
-    PNOUN_TYPE = "Īpašvārda veids"
+    PNOUN_TYPE : str = "Īpašvārda veids"
 
-    LEMMA_WEIRDNESS = "Leksēmas pamatformas īpatnības"
+    LEMMA_WEIRDNESS : str = "Leksēmas pamatformas īpatnības"
 
-    RESIDUAL_TYPE = "Reziduāļa tips"
+    RESIDUAL_TYPE : str = "Reziduāļa tips"
 
-    ABBR_TYPE = "Saīsinājuma tips"
+    ABBR_TYPE : str = "Saīsinājuma tips"
 
 class MorphoVal:
-    NOUN = "Lietvārds"
-    ABBR = "Saīsinājums"
+    NOUN : str = "Lietvārds"
+    ABBR : str = "Saīsinājums"
 
-    SINGULAR = "Vienskaitlis"
-    PLURAL = "Daudzskaitlis"
+    SINGULAR : str = "Vienskaitlis"
+    PLURAL : str = "Daudzskaitlis"
 
-    MASCULINE = "Vīriešu"
-    FEMININE = "Sieviešu"
+    MASCULINE : str = "Vīriešu"
+    FEMININE : str = "Sieviešu"
 
-    VOCATIVE = "Vokatīvs"
+    VOCATIVE : str = "Vokatīvs"
 
-    PROPER_NOUN = "Īpašvārds"
+    PROPER_NOUN : str = "Īpašvārds"
 
-    PLACE_NAME = "Vietvārds"
+    PLACE_NAME : str = "Vietvārds"
 
-    FOREIGN = "Vārds svešvalodā"
+    FOREIGN : str = "Vārds svešvalodā"

@@ -1,3 +1,5 @@
+from io import TextIOWrapper
+
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
 from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
 from lv.ailab.tezaurs.utils.dict.gloss_normalization import full_cleanup
@@ -6,17 +8,17 @@ from lv.ailab.tezaurs.utils.xml.writer import XMLWriter
 
 
 class LMFWriter(XMLWriter):
-
-    def __init__(self, file, dict_version, wordnet_id):
+    def __init__(self, file : TextIOWrapper, dict_version : str, wordnet_id : str):
         super().__init__(file, "  ", "\n")
         self.debug_id : str = ""
         self.wordnet_id : str = wordnet_id
         self.dict_version : str = dict_version
 
-    def print_head(self, wordnet_vers : str):
+
+    def print_head(self, wordnet_vers : str) -> None:
         self.start_document('<!DOCTYPE LexicalResource SYSTEM "http://globalwordnet.github.io/schemas/WN-LMF-1.1.dtd">')
-        self.start_node('LexicalResource', {'xmlns:dc': "http://purl.org/dc/elements/1.1/"})
-        self.start_node('Lexicon', {'id': self.wordnet_id,
+        self.start_node_with_ws('LexicalResource', {'xmlns:dc': "http://purl.org/dc/elements/1.1/"})
+        self.start_node_with_ws('Lexicon', {'id': self.wordnet_id,
                                     'label': 'Latvian Wordnet',
                                     'language': 'lv',
                                     'email': 'laura@ailab.lv',
@@ -28,16 +30,18 @@ class LMFWriter(XMLWriter):
                                                 + 'Proceedings of Global Wordnet Conference, 2023. DOI: 10.18653/v1/2023.gwc-1.23',
                                     'logo': 'https://wordnet.ailab.lv/images/mazais-logo-ailab.svg'})
 
-    def print_tail(self):
-        self.end_node('Lexicon')
-        self.end_node('LexicalResource')
+
+    def print_tail(self) -> None:
+        self.end_node_with_ws('Lexicon')
+        self.end_node_with_ws('LexicalResource')
         self.end_document()
 
-    def print_lexeme(self, lexeme : Lexeme, synseted_senses : list[Sense], print_tags : bool):
+
+    def print_lexeme(self, lexeme : Lexeme, synseted_senses : list[Sense], print_tags : bool) -> None:
         gen_id = f'{self.wordnet_id}-{self.dict_version}'
         item_id = f'{gen_id}-{lexeme.parentEntryHK}-{lexeme.dbId}'
         self.debug_id = item_id
-        self.start_node('LexicalEntry', {'id': item_id})
+        self.start_node_with_ws('LexicalEntry', {'id': item_id})
         pos, abbr_pos = lexeme.gramInfo.get_poses()
         lmfpos = LMFWriter.lmfiy_pos(pos, abbr_pos, lexeme.lemma)
         lemma_params = {'writtenForm': lexeme.lemma, 'partOfSpeech': lmfpos}
@@ -50,10 +54,10 @@ class LMFWriter(XMLWriter):
             self.do_simple_leaf_node('Sense',
                      {'id': f'{gen_id}-{lexeme.parentEntryHK}-{syn_sense.dbId}',
                                                'synset': f'{gen_id}-{syn_sense.synset.dbId}'})
-        self.end_node('LexicalEntry')
+        self.end_node_with_ws('LexicalEntry')
 
 
-    def print_synset(self, synset : Synset, synset_lexemes : list[Lexeme], ili_map : IliMapping):
+    def print_synset(self, synset : Synset, synset_lexemes : list[Lexeme], ili_map : IliMapping) -> None:
         item_id = f'{self.wordnet_id}-{self.dict_version}-{synset.dbId}'
         self.debug_id = item_id
         memberstr = ''
@@ -67,7 +71,7 @@ class LMFWriter(XMLWriter):
             pnw_id = synset.externalEqRelations[0].remoteId
         ili = ili_map.get_mapping(pnw_id)
 
-        self.start_node('Synset', {'id': item_id, 'ili': ili, 'members': memberstr.strip()})
+        self.start_node_with_ws('Synset', {'id': item_id, 'ili': ili, 'members': memberstr.strip()})
         unique_gloss = {}
         for sense in synset.senses:
             if sense.gloss:
@@ -84,11 +88,11 @@ class LMFWriter(XMLWriter):
                 if example.source:
                     attribs['source'] = example.source
                 self.do_simple_leaf_node('Example', attribs, example.text)
-        self.end_node('Synset')
+        self.end_node_with_ws('Synset')
 
 
     @staticmethod
-    def lmfiy_pos(pos: str, abbr_type: str, lemma) -> str:
+    def lmfiy_pos(pos: str, abbr_type: str, lemma : str) -> str:
         if not pos:
             return 'u'
         elif pos == 'Lietvārds' \

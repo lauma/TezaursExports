@@ -25,7 +25,7 @@ def db_connect() -> DbConnection:
     return db_connection
 
 
-def get_dict_version(connection: DbConnection) -> dict[str, str]:
+def get_dict_version(connection : DbConnection) -> dict[str, str]:
     cursor = connection.cursor(cursor_factory=DictCursor)
     sql_dict_properties = f"""
     SELECT title, extract(YEAR from release_timestamp) as year, extract(MONTH from release_timestamp) as month,

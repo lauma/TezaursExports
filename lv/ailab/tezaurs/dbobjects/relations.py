@@ -7,7 +7,8 @@ from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 
 
 class NamedInternalRelation:
-    def __init__(self, my_role, target_role, hidden, target_db_id, target_soft_id = None ):
+    def __init__(self, my_role : str, target_role : str, hidden : bool,
+                 target_db_id : int, target_soft_id : Optional[str] = None ):
         self.myRole : str = my_role
         self.targetRole : str = target_role
         self.targetSoftId : Optional[str] = target_soft_id
@@ -171,7 +172,7 @@ class NamedInternalRelation:
 
 
 class GlossLink:
-    def __init__(self, target_db_id, target_soft_id = None):
+    def __init__(self, target_db_id : int, target_soft_id : Optional[str] = None):
         self.targetSoftId: Optional[str] = target_soft_id
         self.targetDbId: int = target_db_id
 
@@ -227,7 +228,7 @@ class GlossLink:
 
 
 class ExternalRelation:
-    def __init__(self, remote_id, desc, rel_type = None, scope = None):
+    def __init__(self, remote_id : str, desc, rel_type : Optional[str] = None, scope : Optional[str] = None):
         self.remoteId : str = remote_id
         self.desctiption : str = desc
         self.type : Optional[str] = rel_type

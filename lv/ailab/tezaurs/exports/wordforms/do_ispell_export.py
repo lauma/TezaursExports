@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
-from lv.ailab.tezaurs.exports.wordforms.json_wordform_utils import IspellFilter, WordformReader
 import json
 import sys
 import warnings
 
-warn_multiple_inflsets = True
-skip_multiple_inflsets = True
+from lv.ailab.tezaurs.dbaccess.connection import JsonData
+from lv.ailab.tezaurs.exports.wordforms.json_wordform_utils import IspellFilter, WordformReader
+
+
+warn_multiple_inflsets : bool = True
+skip_multiple_inflsets : bool = True
 # Šobrīd vairāki locījumu komplekti ir tikai gadījumos, kad saīsinājumu kļūdaini sadala divās
 # tekstvienībās, tāpēc labāk ir tos visus izlaist. Šis jāmaina, kad salabos saīsinājumus.
 
-wordform_list_path = "inflections.jsonl"
-dict_version = "tezaurs_00_0"
+wordform_list_path : str = "inflections.jsonl"
+dict_version : str = "tezaurs_00_0"
 
 if len(sys.argv) > 1:
     dict_version = sys.argv[1]
 if len(sys.argv) > 2:
     wordform_list_path = sys.argv[2]
 
-wordform_source = WordformReader(wordform_list_path)
-ispell_filter = IspellFilter()
-ispell_forms = {}
+wordform_source : WordformReader = WordformReader(wordform_list_path)
+ispell_filter : IspellFilter = IspellFilter()
+ispell_forms : JsonData = {}
 
 for infl_json in wordform_source.process_line_by_line():
     if not infl_json or len(infl_json) < 1:

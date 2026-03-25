@@ -49,7 +49,7 @@ class GramInfo:
         return True
 
 
-    def set_paradigm_data(self, from_element : DictRow):
+    def set_paradigm_data(self, from_element : DictRow) -> None:
         if 'paradigm' in from_element and from_element['paradigm']:
             self.paradigmName = from_element['paradigm']
         if 'paradigm_data' in from_element and from_element['paradigm_data']:

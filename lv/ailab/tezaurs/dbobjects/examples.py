@@ -6,7 +6,8 @@ from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
 class Example:
-    def __init__(self, db_id, text, hidden, source = None, token_location = None):
+    def __init__(self, db_id : int, text : str, hidden : bool,
+                 source : Optional[str] = None, token_location : Optional[int] = None):
         self.dbID : int = db_id
         self.text : str = text
         self.hidden : bool = hidden

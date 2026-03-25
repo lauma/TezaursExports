@@ -1,6 +1,6 @@
 import regex
 
-superscript = {
+superscript : dict[str, str] = {
     '1': "\u00B9",
     '2': "\u00B2",
     '3': "\u00B3",
@@ -23,7 +23,7 @@ superscript = {
     'x': "\u20E3",
     'g': "\u1D4D",
 }
-subscript = {
+subscript : dict[str, str] = {
     '0': "\u2080",
     '1': "\u2081",
     '2': "\u2082",

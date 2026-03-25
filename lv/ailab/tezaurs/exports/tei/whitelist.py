@@ -4,7 +4,7 @@ import regex
 
 
 class EntryDesc:
-    def __init__(self, entry_name, homonym = 0):
+    def __init__(self, entry_name : str, homonym : int = 0):
         self.entry_name : str = entry_name
         self.homonym : int = homonym
 
@@ -24,7 +24,7 @@ class EntryWhitelist:
     def __init__(self):
         self.entries = []
 
-    def load(self, file_name : str) :
+    def load(self, file_name : str) -> None:
         with open(file_name, 'r', encoding='utf8') as f:
             for line in f:
                 line = line.strip()

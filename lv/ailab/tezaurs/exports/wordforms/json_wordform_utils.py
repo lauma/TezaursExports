@@ -1,11 +1,16 @@
 import json
-import warnings
 import regex
+import warnings
+from io import TextIOWrapper
+from typing import Generator
+
+from lv.ailab.tezaurs.dbaccess.connection import JsonData
+from lv.ailab.tezaurs.dbobjects.gram import Flags
 
 
 class IspellFilter:
 
-    ispell_omit_lexeme_flags = {
+    LEXEME_DISQUALIFYING_FLAGS : dict[str, list[str]] = {
         "Valodas normēšana": ["Nevēlams"],
         "Lietojums": ["Apvidvārds", "Barbarisms", "Bērnu valoda", "Dialektisms", "Īsziņās", "Lamuvārds", "Neaktuāls", "Neliterārs", "Nevēlams", "Novecojis", "Okazionālisms", "Sarunā ar bērniem", "Sarunvaloda", "Sens, reti lietots vārds", "Slengs", "Vulgārisms", "Žargonisms"],
         "Stils" : ["Vienkāršrunas stilistiskā nokrāsa"],
@@ -14,21 +19,18 @@ class IspellFilter:
         "Izloksne": [],
         "Vārdšķira" : ["Reziduālis", "Vārds svešvalodā"]
     }
-    ispell_omit_form_flags = {
+    FORM_DISQUALIFYING_FLAGS : dict[str, list[str]] = {
         "Pakāpe": ["Pārākā", "Vispārākā"]
     }
-    ispell_omit_paradigms = ["foreign", "number", "punct", "residual"]
+    DISQUALIFYING_PARADIGMS : list[str] = ["foreign", "number", "punct", "residual"]
 
-    #def __init__(self, lexeme_properties_path):
-    #    with open(lexeme_properties_path, 'r', encoding='utf8') as file:
-    #        self.property_map = json.load(file)
 
     @staticmethod
-    def _flags_match_omit(flags, criteria):
-        if not flags or len(flags) < 1:
+    def _flags_match_omit(flags: Flags, criteria : Flags) -> bool:
+        if not flags:
             return False
         for flag_type in criteria:
-            if flag_type in flags and len(flags[flag_type])> 0:
+            if flag_type in flags and flags[flag_type]:
                 if len(criteria[flag_type]) < 1:
                     return True
                 else:
@@ -37,38 +39,33 @@ class IspellFilter:
                             return True
         return False
 
+
     # Checks if at least one of the lexemes associated with the given inflection path
     # matches the criteria for being included in spellchecker output (not regional, rude, etc.)
-    def lexeme_good_for_spelling(self, inflection_json):
-        #if not inflection_path in self.property_map:
-        #    return False
-        #properties_list = self.property_map[inflection_path]
-        #if len(properties_list) < 1:
-        #    return False
-        #for property_set in properties_list:
-        #    is_good = True
-        if inflection_json["paradigm"] in self.ispell_omit_paradigms:
+    def lexeme_good_for_spelling(self, inflection_json : JsonData) -> bool:
+        if inflection_json["paradigm"] in self.DISQUALIFYING_PARADIGMS:
             return False
         if "flags" in inflection_json:
-            return not self._flags_match_omit(inflection_json["flags"], self.ispell_omit_lexeme_flags)
+            return not self._flags_match_omit(inflection_json["flags"], self.LEXEME_DISQUALIFYING_FLAGS)
         return True
 
-    def form_good_for_spelling(self, form_property_map):
-        bad = self._flags_match_omit(form_property_map, self.ispell_omit_form_flags) \
-               or self._flags_match_omit(form_property_map, self.ispell_omit_lexeme_flags)
+
+    def form_good_for_spelling(self, form_property_map : Flags) -> bool:
+        bad = self._flags_match_omit(form_property_map, self.FORM_DISQUALIFYING_FLAGS) \
+               or self._flags_match_omit(form_property_map, self.LEXEME_DISQUALIFYING_FLAGS)
         return not bad
 
 
+
 class WordformReader:
+    def __init__(self, wordform_list_path : str, correct_fffd : bool = False):
+        self.wordform_file : TextIOWrapper = open(wordform_list_path, 'r', encoding='utf8')
+        self.correct_fffd : bool = correct_fffd
 
-    bad_lines = []
-    skipped = 0
+        self.bad_lines : list[str] = []
+        self.skipped : int = 0
 
-    def __init__(self, wordform_list_path, correct_fffd=False):
-        self.wordform_file = open(wordform_list_path, 'r', encoding='utf8')
-        self.correct_fffd = correct_fffd
-
-    def process_line_by_line(self):
+    def process_line_by_line(self) -> Generator[JsonData] :
         for line in self.wordform_file:
             if regex.search('\uFFFD', line):
                 self.bad_lines.append(line)
@@ -115,7 +112,7 @@ class WordformReader:
                         warnings.warn(f"Line with \\uFFFD in value {regex_res.group(1)} skiped!")
                         self.skipped = self.skipped + 1
                         continue
-            if not regex.search("^\s*[\[\]]?\s*$", line):
+            if not regex.search("^\\s*[\\[\\]]?\\s*$", line):
                 try:
                     # json_result = json.loads("{" + line.rstrip(", \n\r") + "}")
                     json_result = json.loads(line)
@@ -125,7 +122,7 @@ class WordformReader:
                     continue
                 yield json_result
 
-    def print_bad_line_log(self):
+    def print_bad_line_log(self) -> None:
         if len(self.bad_lines) > 0:
             print(f"\n{len(self.bad_lines)} problem lines encountered.")
             with open("bad_lines.log", 'w', encoding='utf8') as log:
