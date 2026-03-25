@@ -66,23 +66,25 @@ class NamedInternalRelation:
 
 
     @staticmethod
-    def fetch_semantic_derivs_by_sense(connection : DbConnection, sense_id : int) -> list[NamedInternalRelation]:
+    def fetch_semantic_derivs_by_sense(connection : DbConnection, sense_id : int, synseted_other_end : bool = False) -> list[NamedInternalRelation]:
         cursor = connection.cursor(cursor_factory=DictCursor)
         result = []
 
+        where_clause_1 = "" if not synseted_other_end else "AND s2.synset_id IS NOT NULL"
         sql_sem_derivs_1 = f"""
-    SELECT sr.id, sr.hidden, s2.id as sense_id, s2.order_no as sense_no, s2p.order_no as parent_sense_no,
-           e2.human_key as entry_hk, sr.data->'role_1' #>> '{{}}' as role1, sr.data->'role_2' #>> '{{}}' as role2
-    FROM {DbConnectionInfo.schema}.sense_relations as sr
-    JOIN {DbConnectionInfo.schema}.sense_rel_types as srl ON sr.type_id = srl.id
-    JOIN {DbConnectionInfo.schema}.senses as s2 ON sr.sense_2_id = s2.id
+    SELECT sr.id, sr.hidden, s2.id AS sense_id, s2.order_no AS sense_no, s2p.order_no AS parent_sense_no,
+           e2.human_key AS entry_hk, sr.data->'role_1' #>> '{{}}' AS role1, sr.data->'role_2' #>> '{{}}' AS role2
+    FROM {DbConnectionInfo.schema}.sense_relations AS sr
+    JOIN {DbConnectionInfo.schema}.sense_rel_types AS srl ON sr.type_id = srl.id
+    JOIN {DbConnectionInfo.schema}.senses AS s2 ON sr.sense_2_id = s2.id
     LEFT OUTER JOIN {DbConnectionInfo.schema}.senses s2p ON s2.parent_sense_id = s2p.id
-    JOIN {DbConnectionInfo.schema}.entries e2 on s2.entry_id = e2.id
-    WHERE sr.sense_1_id = {sense_id} and srl.relation_name = 'semanticRelation' 
-          and (NOT sr.hidden or sr.reason_for_hiding='not-public')
-          and (NOT s2.hidden or s2.reason_for_hiding='not-public')
-          and (s2p.hidden is NULL or NOT s2p.hidden or s2p.reason_for_hiding='not-public')
-          and (NOT e2.hidden or e2.reason_for_hiding='not-public')
+    JOIN {DbConnectionInfo.schema}.entries e2 ON s2.entry_id = e2.id
+    WHERE sr.sense_1_id = {sense_id} AND srl.relation_name = 'semanticRelation' 
+          AND (NOT sr.hidden OR sr.reason_for_hiding='not-public')
+          AND (NOT s2.hidden OR s2.reason_for_hiding='not-public')
+          AND (s2p.hidden IS NULL OR NOT s2p.hidden OR s2p.reason_for_hiding='not-public')
+          AND (NOT e2.hidden OR e2.reason_for_hiding='not-public')
+          {where_clause_1}
     """
         cursor.execute(sql_sem_derivs_1)
         sem_derivs_1 = cursor.fetchall()
@@ -93,19 +95,21 @@ class NamedInternalRelation:
                                              db_row['sense_no'], target_soft_id)
             result.append(relation)
 
+        where_clause_2 = "" if not synseted_other_end else "AND s1.synset_id IS NOT NULL"
         sql_sem_derivs_2 = f"""
-    SELECT sr.id, sr.hidden, s1.id as sense_id, s1.order_no as sense_no, s1p.order_no as parent_sense_no,
-           e1.human_key as entry_hk, sr.data->'role_1' #>> '{{}}' as role1, sr.data->'role_2' #>> '{{}}' as role2
-    FROM {DbConnectionInfo.schema}.sense_relations as sr
-    JOIN {DbConnectionInfo.schema}.sense_rel_types as srl ON sr.type_id = srl.id
-    JOIN {DbConnectionInfo.schema}.senses as s1 ON sr.sense_1_id = s1.id
+    SELECT sr.id, sr.hidden, s1.id AS sense_id, s1.order_no AS sense_no, s1p.order_no AS parent_sense_no,
+           e1.human_key AS entry_hk, sr.data->'role_1' #>> '{{}}' AS role1, sr.data->'role_2' #>> '{{}}' AS role2
+    FROM {DbConnectionInfo.schema}.sense_relations AS sr
+    JOIN {DbConnectionInfo.schema}.sense_rel_types AS srl ON sr.type_id = srl.id
+    JOIN {DbConnectionInfo.schema}.senses AS s1 ON sr.sense_1_id = s1.id
     LEFT OUTER JOIN {DbConnectionInfo.schema}.senses s1p ON s1.parent_sense_id = s1p.id
-    JOIN {DbConnectionInfo.schema}.entries e1 on s1.entry_id = e1.id
-    WHERE sr.sense_2_id = {sense_id} and srl.relation_name = 'semanticRelation'
-          and (NOT sr.hidden or sr.reason_for_hiding='not-public')
-          and (NOT s1.hidden or s1.reason_for_hiding='not-public')
-          and (s1p.hidden is NULL or NOT s1p.hidden or s1p.reason_for_hiding='not-public')
-          and (NOT e1.hidden or e1.reason_for_hiding='not-public')
+    JOIN {DbConnectionInfo.schema}.entries e1 ON s1.entry_id = e1.id
+    WHERE sr.sense_2_id = {sense_id} AND srl.relation_name = 'semanticRelation'
+          AND (NOT sr.hidden OR sr.reason_for_hiding='not-public')
+          AND (NOT s1.hidden OR s1.reason_for_hiding='not-public')
+          AND (s1p.hidden IS NULL OR NOT s1p.hidden OR s1p.reason_for_hiding='not-public')
+          AND (NOT e1.hidden OR e1.reason_for_hiding='not-public')
+          {where_clause_2}
     """
         cursor.execute(sql_sem_derivs_2)
         sem_derivs_2 = cursor.fetchall()

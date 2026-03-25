@@ -112,10 +112,10 @@ class Sense:
     def fetch_synseted_senses_by_lexeme(connection : DbConnection, lexeme_id : int) -> list[Sense]:
         cursor = connection.cursor(cursor_factory=DictCursor)
         sql_senses = f"""
-    SELECT s.id as sense_id, s.order_no, s.gloss, s.hidden, s.synset_id
+    SELECT s.id AS sense_id, s.order_no, s.gloss, s.hidden, s.synset_id
     FROM {DbConnectionInfo.schema}.senses s
-    JOIN {DbConnectionInfo.schema}.lexemes l on s.entry_id = l.entry_id
-    WHERE l.id = {lexeme_id} AND s.synset_id<>0 AND (NOT s.hidden OR s.reason_for_hiding='not-public')
+    JOIN {DbConnectionInfo.schema}.lexemes l ON s.entry_id = l.entry_id
+    WHERE l.id = {lexeme_id} AND s.synset_id IS NOT NULL AND (NOT s.hidden OR s.reason_for_hiding='not-public')
     """
         cursor.execute(sql_senses)
         senses = cursor.fetchall()
@@ -124,8 +124,7 @@ class Sense:
         result = []
         for db_row in senses:
             sense = Sense(db_row['sense_id'], db_row['order_no'], db_row['gloss'], db_row['hidden'])
-            if 'synset_id' in db_row and db_row['synset_id']:
-                sense.synset = Synset(db_row['synset_id'], None)
+            sense.synset = Synset(db_row['synset_id'], [])
             result.append(sense)
         return result
 

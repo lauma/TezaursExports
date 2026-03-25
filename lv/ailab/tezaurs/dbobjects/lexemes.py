@@ -93,15 +93,15 @@ class Lexeme:
     def fetch_all_synseted_lexemes(connection : DbConnection) -> Generator[Lexeme]:
         cursor = connection.cursor(cursor_factory=DictCursor)
         sql_synset_lexemes = f"""
-    SELECT l.id as id, l.entry_id as entry_id, l.lemma as lemma,
-        l.data, p.data as paradigm_data, l.hidden,
-        p.human_key as paradigm, stem1, stem2, stem3, e.human_key as entry_hk
-    FROM {DbConnectionInfo.schema}.lexemes as l
-    JOIN {DbConnectionInfo.schema}.lexeme_types lt on l.type_id = lt.id
-    LEFT JOIN {DbConnectionInfo.schema}.paradigms p on l.paradigm_id = p.id
-    JOIN {DbConnectionInfo.schema}.entries e on l.entry_id = e.id
-    JOIN {DbConnectionInfo.schema}.senses s on l.entry_id = s.entry_id
-    WHERE s.synset_id <> 0
+    SELECT l.id AS id, l.entry_id AS entry_id, l.lemma AS lemma,
+        l.data, p.data AS paradigm_data, l.hidden,
+        p.human_key AS paradigm, stem1, stem2, stem3, e.human_key AS entry_hk
+    FROM {DbConnectionInfo.schema}.lexemes AS l
+    JOIN {DbConnectionInfo.schema}.lexeme_types lt ON l.type_id = lt.id
+    LEFT JOIN {DbConnectionInfo.schema}.paradigms p ON l.paradigm_id = p.id
+    JOIN {DbConnectionInfo.schema}.entries e ON l.entry_id = e.id
+    JOIN {DbConnectionInfo.schema}.senses s ON l.entry_id = s.entry_id
+    WHERE s.synset_id IS NOT NULL
           AND (NOT l.hidden OR l.reason_for_hiding='not-public')
           AND (NOT s.hidden OR s.reason_for_hiding='not-public')
           AND (NOT e.hidden OR e.reason_for_hiding='not-public') 
