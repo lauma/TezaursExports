@@ -51,9 +51,16 @@ class LMFWriter(XMLWriter):
             if paradigm_text:
                 self.do_simple_leaf_node('Tag', {}, paradigm_text)
         for syn_sense in synseted_senses:
-            self.do_simple_leaf_node('Sense',
-                     {'id': f'{gen_id}-{lexeme.parentEntryHK}-{syn_sense.dbId}',
-                                               'synset': f'{gen_id}-{syn_sense.synset.dbId}'})
+            xml_attrs = {'id': f'{gen_id}-{lexeme.parentEntryHK}-{syn_sense.dbId}',
+                                               'synset': f'{gen_id}-{syn_sense.synset.dbId}'}
+            if not syn_sense.semanticDerivatives:
+                self.do_simple_leaf_node('Sense', xml_attrs)
+            else:
+                self.start_node_with_ws('Sense', xml_attrs)
+                for deriv in syn_sense.semanticDerivatives:
+                    self.do_simple_leaf_node('SenseRelation',
+                         {'relType' : 'derivation', 'target': f'{gen_id}-{deriv.targetEntryHk}-{deriv.targetDbId}'})
+                self.end_node_with_ws('Sense')
         self.end_node_with_ws('LexicalEntry')
 
 

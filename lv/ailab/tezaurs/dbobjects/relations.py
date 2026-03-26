@@ -7,12 +7,13 @@ from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 
 
 class NamedInternalRelation:
-    def __init__(self, my_role : str, target_role : str, hidden : bool,
-                 target_db_id : int, target_soft_id : Optional[str] = None ):
+    def __init__(self, my_role : str, target_role : str, hidden : bool, target_db_id : int,
+                 target_entry_hk : Optional[str] = None, target_soft_id : Optional[str] = None ):
         self.myRole : str = my_role
         self.targetRole : str = target_role
         self.targetSoftId : Optional[str] = target_soft_id
         self.targetDbId : int = target_db_id
+        self.targetEntryHk : Optional[str] = target_entry_hk
         self.relationLabel : Optional[str] = None
         self.hidden : bool = hidden
         self.gramInfo : GramInfo = GramInfo()
@@ -36,7 +37,7 @@ class NamedInternalRelation:
         derivs_from = cursor.fetchall()
         for db_row in derivs_from:
             relation = NamedInternalRelation(db_row['name'], db_row['name_inverse'], db_row['hidden'],
-                                             db_row['end_id'], db_row['end_human_key'])
+                                             db_row['end_id'], db_row['end_human_key'], db_row['end_human_key'])
             relation.gramInfo = GramInfo.extract_gram(db_row)
             result.append(relation)
 
@@ -54,7 +55,7 @@ class NamedInternalRelation:
         derivs_to = cursor.fetchall()
         for db_row in derivs_to:
             relation = NamedInternalRelation(db_row['name_inverse'], db_row['name'], db_row['hidden'],
-                                             db_row['end_id'], db_row['end_human_key'])
+                                             db_row['end_id'], db_row['end_human_key'], db_row['end_human_key'])
             # 2024-09-19 ar valodniekiem WN seminārā tiek runāts, ka loģiskāk
             # ir formantu un celma informāciju redzēt pie atvasinājuma, nevis
             # atvasināmā.
@@ -92,7 +93,7 @@ class NamedInternalRelation:
             target_soft_id = f"{db_row['entry_hk']}/{db_row['parent_sense_no']}/{db_row['sense_no']}"\
                 if db_row['parent_sense_no'] else f"{db_row['entry_hk']}/{db_row['sense_no']}"
             relation = NamedInternalRelation(db_row['role1'], db_row['role2'], db_row['hidden'],
-                                             db_row['sense_no'], target_soft_id)
+                                             db_row['sense_id'], db_row['entry_hk'], target_soft_id)
             result.append(relation)
 
         where_clause_2 = "" if not synseted_other_end else "AND s1.synset_id IS NOT NULL"
@@ -117,7 +118,7 @@ class NamedInternalRelation:
             target_soft_id = f"{db_row['entry_hk']}/{db_row['parent_sense_no']}/{db_row['sense_no']}"\
                 if db_row['parent_sense_no'] else f"{db_row['entry_hk']}/{db_row['sense_no']}"
             relation = NamedInternalRelation(db_row['role2'], db_row['role1'], db_row['hidden'],
-                                             db_row['sense_no'], target_soft_id)
+                                             db_row['sense_id'], db_row['entry_hk'], target_soft_id)
             result.append(relation)
 
         sorted_result = sorted(result,

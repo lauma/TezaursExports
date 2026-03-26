@@ -125,6 +125,8 @@ class Sense:
         for db_row in senses:
             sense = Sense(db_row['sense_id'], db_row['order_no'], db_row['gloss'], db_row['hidden'])
             sense.synset = Synset(db_row['synset_id'], [])
+            sense.semanticDerivatives = NamedInternalRelation.fetch_semantic_derivs_by_sense(
+                connection, db_row['sense_id'], True)
             result.append(sense)
         return result
 
