@@ -8,7 +8,7 @@ from lv.ailab.tezaurs.dbobjects.senses import Synset, Sense
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
 from lv.ailab.tezaurs.exports.lmf.lmf_output import LMFWriter
 
-# TODO: izrunas, LMF POS no tēzaura vārdšķiras
+# TODO: izrunas
 wordnet_id : str = 'wordnet_lv'
 wordnet_vers : str = '1.0'
 connection : DbConnection

@@ -6,6 +6,14 @@ from lv.ailab.tezaurs.utils.dict.gloss_normalization import full_cleanup
 from lv.ailab.tezaurs.utils.dict.ili import IliMapping
 from lv.ailab.tezaurs.utils.xml.writer import XMLWriter
 
+# TODO future-work
+# Jāpārtaisa LMF drukāšana tā, lai tēzaura nozīmes, kas atbilst vairākām
+# leksēmām, tiktu dublētas katrai leksēmai ar savu atšķirīgu idu (varbūt
+# elementa Sense id atribūtā jālieto nevis šķirkļa HK, bet leksēma). Tas
+# tālāk rada nepieciešamību pārdomāt, kā pareizi veidot SenseRelation
+# target atribūtu, jo tas vairs neizriet vienkārši no nozīmes datubāzes
+# ida. Tāpat tas ietekmēs arī Synset elementā uzskaitītos members (jāzina,
+# cik un kādus dublikātus uzskaitīt).
 
 class LMFWriter(XMLWriter):
     def __init__(self, file : TextIOWrapper, dict_version : str, wordnet_id : str):
@@ -82,9 +90,9 @@ class LMFWriter(XMLWriter):
         unique_gloss = {}
         for sense in synset.senses:
             if sense.gloss:
-                unique_gloss[full_cleanup(sense.gloss)] = 1
+                unique_gloss[full_cleanup(sense.gloss).lower()] = full_cleanup(sense.gloss)
         for gloss in unique_gloss:
-            self.do_simple_leaf_node('Definition', {}, gloss)
+            self.do_simple_leaf_node('Definition', {}, unique_gloss[gloss])
         for rel in synset.relations:
             self.do_simple_leaf_node('SynsetRelation',
                                      {'relType': rel.targetRole,
