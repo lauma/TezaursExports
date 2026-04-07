@@ -10,9 +10,11 @@
 # DB config with password
 /lv/ailab/tezaurs/dbaccess/db_config.py
 
-#MacOS stuff
-.DS_Store
+# PyCharm
+.idea
 
+# MacOS stuff
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
