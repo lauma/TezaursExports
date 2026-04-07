@@ -37,7 +37,7 @@ class Lexeme:
     SELECT l.id, lemma, lt.name as lexeme_type, p.human_key as paradigm, stem1, stem2, stem3,
         l.data, p.data as paradigm_data, l.hidden
     FROM {DbConnectionInfo.schema}.lexemes l
-    JOIN {DbConnectionInfo.schema}.lexeme_types lt ON l.type_id = lt.id
+    JOIN {DbConnectionInfo.schema}.lexeme_roles lt ON l.role_id = lt.id
     LEFT OUTER JOIN {DbConnectionInfo.schema}.paradigms p ON l.paradigm_id = p.id
     WHERE entry_id = {entry_id} and (NOT hidden or reason_for_hiding='not-public')
     ORDER BY (l.id!={main_lex_id}), order_no
@@ -69,7 +69,7 @@ class Lexeme:
     FROM {DbConnectionInfo.schema}.synsets syn
     RIGHT OUTER JOIN {DbConnectionInfo.schema}.senses s ON syn.id = s.synset_id
     RIGHT OUTER JOIN {DbConnectionInfo.schema}.lexemes l ON s.entry_id = l.entry_id
-    JOIN {DbConnectionInfo.schema}.lexeme_types lt on l.type_id = lt.id
+    JOIN {DbConnectionInfo.schema}.lexeme_roles lt on l.role_id = lt.id
     JOIN {DbConnectionInfo.schema}.entries e ON s.entry_id = e.id
     WHERE syn.id = {synset_id}
           and (NOT s.hidden or s.reason_for_hiding='not-public')
@@ -97,7 +97,7 @@ class Lexeme:
         l.data, p.data AS paradigm_data, l.hidden,
         p.human_key AS paradigm, stem1, stem2, stem3, e.human_key AS entry_hk
     FROM {DbConnectionInfo.schema}.lexemes AS l
-    JOIN {DbConnectionInfo.schema}.lexeme_types lt ON l.type_id = lt.id
+    JOIN {DbConnectionInfo.schema}.lexeme_roles lt ON l.role_id = lt.id
     LEFT JOIN {DbConnectionInfo.schema}.paradigms p ON l.paradigm_id = p.id
     JOIN {DbConnectionInfo.schema}.entries e ON l.entry_id = e.id
     JOIN {DbConnectionInfo.schema}.senses s ON l.entry_id = s.entry_id
