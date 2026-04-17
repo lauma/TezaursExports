@@ -16,6 +16,7 @@ class Sense:
         self.calculatedHumanId : Optional[str] = None
         self.orderNo : int = ord_no
         self.hidden : bool = hidden
+
         self.gloss : str = gloss
 
         self.synset : Optional[Synset] = None
@@ -66,9 +67,9 @@ class Sense:
             sense.semanticDerivatives = NamedInternalRelation.fetch_semantic_derivs_by_sense(connection, sense_id)
             sense.sources = DictSource.fetch_sources_by_esl_id(connection, None, None, sense_id)
 
-            if regex.search(r'\[((?:\p{L}\p{M}*)+)\]\{e:\d+\}', gloss):
+            if regex.search(r'\[((?:\p{L}\p{M}*)+)]\{e:\d+}', gloss):
                 sense.glossToEntryLinks = GlossLink.fetch_gloss_entry_links(connection, sense_id)
-            if regex.search(r'\[((?:\p{L}\p{M}*)+)\]\{s:\d+\}', gloss):
+            if regex.search(r'\[((?:\p{L}\p{M}*)+)]\{s:\d+}', gloss):
                 sense.glossToSenseLinks = GlossLink.fetch_gloss_sense_links(connection, sense_id)
 
             result.append(sense)
@@ -100,7 +101,7 @@ class Sense:
             sense_no = db_row['sense_no']
             sense = Sense(db_row['sense_id'], sense_no, db_row['gloss'], db_row['hidden'])
             if 'parent_sense_no' in db_row and db_row['parent_sense_no']:
-                sense.calculatedHumanId = f"{entry_hk}/{db_row['parent_sense_no']}/{sense_no}"
+                sense.calculatedHumanId = f"{entry_hk}/sense_{db_row['parent_sense_no']}/sense_{sense_no}"
             else:
                 sense.calculatedHumanId = f"{entry_hk}/{sense_no}"
             sense.examples = Example.fetch_examples(connection, db_row['sense_id'])

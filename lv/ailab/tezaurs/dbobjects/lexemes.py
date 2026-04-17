@@ -5,7 +5,7 @@ from psycopg2.extras import DictCursor
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
-from lv.ailab.tezaurs.dbobjects.relations import ExternalRelation
+from lv.ailab.tezaurs.dbobjects.relations import ExternalRelation, NamedInternalRelation
 from lv.ailab.tezaurs.dbobjects.senses import Sense
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 from lv.ailab.tezaurs.dbobjects.wordforms import Wordform
@@ -28,6 +28,8 @@ class Lexeme:
 
         self.parentEntryDbId : Optional[int] = None
         self.parentEntryHK : Optional[str] = None
+
+        self.morphoDerivatives: list[NamedInternalRelation] = []
 
 
     @staticmethod
@@ -56,6 +58,9 @@ class Lexeme:
                 db_row, {'Stems', 'Morfotabulas tips', 'Paradigmas īpatnības'})
             lexeme.sources = DictSource.fetch_sources_by_esl_id(
                 connection, None, db_row['id'], None)
+            morpho_derivs = NamedInternalRelation.fetch_morpho_derivs(connection, db_row['id'])
+            if morpho_derivs:
+                lexeme.morphoDerivatives = morpho_derivs
             result.append(lexeme)
         return result
 

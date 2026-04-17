@@ -1,4 +1,4 @@
-from typing import Generator, Optional
+from typing import Optional
 from psycopg2.extras import DictCursor
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
@@ -15,7 +15,7 @@ class DictSource:
 
 
     @staticmethod
-    def fetch_all_sources(connection : DbConnection) -> Generator[DictSource]:
+    def fetch_all_sources(connection : DbConnection) -> list[DictSource]:
         cursor = connection.cursor(cursor_factory=DictCursor)
         sql_dict_sources = f"""
             SELECT abbr, title, url
@@ -23,12 +23,13 @@ class DictSource:
             ORDER BY abbr ASC
         """
         cursor.execute(sql_dict_sources)
-        while True:
-            db_rows = cursor.fetchmany(1000)
-            if not db_rows:
-                break
-            for row in db_rows:
-                yield DictSource(row['abbr'], row['title'], row['url'])
+        sources = cursor.fetchall()
+        if not sources:
+            return []
+        result = []
+        for row in sources:
+            result.append(DictSource(row['abbr'], row['title'], row['url']))
+        return result
 
 
     @staticmethod

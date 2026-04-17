@@ -20,42 +20,44 @@ class NamedInternalRelation:
 
 
     @staticmethod
-    def fetch_morpho_derivs(connection : DbConnection, entry_id : int) -> list[NamedInternalRelation]:
+    def fetch_morpho_derivs(connection : DbConnection, lexeme_id : int) -> list[NamedInternalRelation]:
         result = []
         cursor = connection.cursor(cursor_factory=DictCursor)
         sql_derivs_from = f"""
-    SELECT er.id, ert.name, ert.name_inverse, e2.id as end_id, e2.human_key as end_human_key,
-           er.data as data, er.hidden
-    FROM {DbConnectionInfo.schema}.entry_relations er
-    JOIN {DbConnectionInfo.schema}.entry_rel_types ert on type_id = ert.id
-    JOIN {DbConnectionInfo.schema}.entries e2 on entry_2_id = e2.id
-    WHERE entry_1_id = {entry_id} and ert.name = 'derivativeOf'
-          and (NOT er.hidden or er.reason_for_hiding='not-public')
-          and (NOT e2.hidden or e2.reason_for_hiding='not-public')
+    SELECT lr.id, lrt.name, lrt.name_inverse, l2.id as end_id, e2.human_key as end_human_key,
+           lr.data as data, lr.hidden
+    FROM {DbConnectionInfo.schema}.lexeme_relations lr
+    JOIN {DbConnectionInfo.schema}.lexeme_rel_types lrt on lr.type_id = lrt.id
+    JOIN {DbConnectionInfo.schema}.lexemes l2 on lr.lexeme_2_id = l2.id
+    JOIN {DbConnectionInfo.schema}.entries e2 on l2.entry_id = e2.id
+    WHERE lexeme_1_id = {lexeme_id} and lrt.name = 'derivativeOf'
+          and (NOT lr.hidden or lr.reason_for_hiding='not-public')
+          and (NOT l2.hidden or l2.reason_for_hiding='not-public')
     """
         cursor.execute(sql_derivs_from)
         derivs_from = cursor.fetchall()
         for db_row in derivs_from:
             relation = NamedInternalRelation(db_row['name'], db_row['name_inverse'], db_row['hidden'],
-                                             db_row['end_id'], db_row['end_human_key'], db_row['end_human_key'])
+                                             db_row['end_id'], db_row['end_human_key'])
             relation.gramInfo = GramInfo.extract_gram(db_row)
             result.append(relation)
 
         sql_derivs_to = f"""
-    SELECT er.id, ert.name, ert.name_inverse, e1.id as end_id, e1.human_key as end_human_key,
-           er.data as data, er.hidden
-    FROM {DbConnectionInfo.schema}.entry_relations er
-    JOIN {DbConnectionInfo.schema}.entry_rel_types ert on type_id = ert.id
-    JOIN {DbConnectionInfo.schema}.entries e1 on entry_1_id = e1.id
-    WHERE entry_2_id = {entry_id} and ert.name = 'derivativeOf'
-          and (NOT er.hidden or er.reason_for_hiding='not-public')
-          and (NOT e1.hidden or e1.reason_for_hiding='not-public')
+    SELECT lr.id, lrt.name, lrt.name_inverse, e1.id as end_id, e1.human_key as end_human_key,
+           lr.data as data, lr.hidden
+    FROM {DbConnectionInfo.schema}.lexeme_relations lr
+    JOIN {DbConnectionInfo.schema}.lexeme_rel_types lrt on lr.type_id = lrt.id
+    JOIN {DbConnectionInfo.schema}.lexemes l1 on lr.lexeme_1_id = l1.id
+    JOIN {DbConnectionInfo.schema}.entries e1 on l1.entry_id = e1.id
+    WHERE lexeme_2_id = {lexeme_id} and lrt.name = 'derivativeOf'
+          and (NOT lr.hidden or lr.reason_for_hiding='not-public')
+          and (NOT l1.hidden or l1.reason_for_hiding='not-public')
     """
         cursor.execute(sql_derivs_to)
         derivs_to = cursor.fetchall()
         for db_row in derivs_to:
             relation = NamedInternalRelation(db_row['name_inverse'], db_row['name'], db_row['hidden'],
-                                             db_row['end_id'], db_row['end_human_key'], db_row['end_human_key'])
+                                             db_row['end_id'], db_row['end_human_key'])
             # 2024-09-19 ar valodniekiem WN seminārā tiek runāts, ka loģiskāk
             # ir formantu un celma informāciju redzēt pie atvasinājuma, nevis
             # atvasināmā.
@@ -90,8 +92,8 @@ class NamedInternalRelation:
         cursor.execute(sql_sem_derivs_1)
         sem_derivs_1 = cursor.fetchall()
         for db_row in sem_derivs_1:
-            target_soft_id = f"{db_row['entry_hk']}/{db_row['parent_sense_no']}/{db_row['sense_no']}"\
-                if db_row['parent_sense_no'] else f"{db_row['entry_hk']}/{db_row['sense_no']}"
+            target_soft_id = f"{db_row['entry_hk']}/sense_{db_row['parent_sense_no']}/sense_{db_row['sense_no']}"\
+                if db_row['parent_sense_no'] else f"{db_row['entry_hk']}/sense_{db_row['sense_no']}"
             relation = NamedInternalRelation(db_row['role1'], db_row['role2'], db_row['hidden'],
                                              db_row['sense_id'], db_row['entry_hk'], target_soft_id)
             result.append(relation)
@@ -115,8 +117,8 @@ class NamedInternalRelation:
         cursor.execute(sql_sem_derivs_2)
         sem_derivs_2 = cursor.fetchall()
         for db_row in sem_derivs_2:
-            target_soft_id = f"{db_row['entry_hk']}/{db_row['parent_sense_no']}/{db_row['sense_no']}"\
-                if db_row['parent_sense_no'] else f"{db_row['entry_hk']}/{db_row['sense_no']}"
+            target_soft_id = f"{db_row['entry_hk']}/sense_{db_row['parent_sense_no']}/sense_{db_row['sense_no']}"\
+                if db_row['parent_sense_no'] else f"{db_row['entry_hk']}/sense_{db_row['sense_no']}"
             relation = NamedInternalRelation(db_row['role2'], db_row['role1'], db_row['hidden'],
                                              db_row['sense_id'], db_row['entry_hk'], target_soft_id)
             result.append(relation)
@@ -225,8 +227,8 @@ class GlossLink:
         for db_row in gloss_links:
             endpoint = db_row['human_key']
             if 'parent_order' in db_row and db_row['parent_order']:
-                endpoint = endpoint + '/' + str(db_row['parent_order'])
-            endpoint = endpoint + '/' + str(db_row['sense_order'])
+                endpoint = endpoint + '/sense_' + str(db_row['parent_order'])
+            endpoint = endpoint + '/sense_' + str(db_row['sense_order'])
             result[db_row['id']] = GlossLink(db_row['sense_id'], endpoint)
         return result
 
@@ -253,7 +255,7 @@ class ExternalRelation:
     FROM {DbConnectionInfo.schema}.synsets syn
     JOIN {DbConnectionInfo.schema}.synset_external_links el ON syn.id = el.synset_id
     JOIN {DbConnectionInfo.schema}.external_link_types lt ON el.link_type_id = lt.id
-    WHERE syn.id = {synset_id} {where_clause}and el.data is null
+    WHERE syn.id = {synset_id} {where_clause}and (el.data is null or el.data->>'Relation' is null)
     ORDER BY el.remote_id
     """
         cursor.execute(sql_synset_lexemes)
@@ -273,11 +275,11 @@ class ExternalRelation:
         cursor = connection.cursor(cursor_factory=DictCursor)
         sql_synset_lexemes = f"""
     SELECT syn.id as synset_id, el.url as url, el.remote_id as remote_id, lt.name as type,
-           lt.description as description, el.data->'Relation' #>> '{{}}' as rel_scope
+           lt.description as description, el.data->>'Relation' as rel_scope
     FROM {DbConnectionInfo.schema}.synsets syn
     JOIN {DbConnectionInfo.schema}.synset_external_links el ON syn.id = el.synset_id
     JOIN {DbConnectionInfo.schema}.external_link_types lt ON el.link_type_id = lt.id
-    WHERE syn.id = {synset_id} {where_clause}and el.data is not null
+    WHERE syn.id = {synset_id} {where_clause}and el.data is not null and el.data->>'Relation' is not null
     ORDER BY el.remote_id
     """
         cursor.execute(sql_synset_lexemes)

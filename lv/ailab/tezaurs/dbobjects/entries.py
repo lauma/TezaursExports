@@ -7,14 +7,15 @@ from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 from lv.ailab.tezaurs.dbobjects.examples import Example
 from lv.ailab.tezaurs.dbobjects.gram import GramInfo
 from lv.ailab.tezaurs.dbobjects.lexemes import Lexeme
-from lv.ailab.tezaurs.dbobjects.relations import NamedInternalRelation
 from lv.ailab.tezaurs.dbobjects.senses import Sense
 from lv.ailab.tezaurs.dbobjects.sources import DictSource
 
 
 class Entry:
-    def __init__(self, db_id : int, homonym : int, entry_type : str, headword : str, hidden : bool):
+    def __init__(self, db_id : int, human_key : str, homonym : int, entry_type : str,
+                 headword : str, hidden : bool):
         self.dbId : int = db_id
+        self.entryHk : str = human_key
         self.hidden : bool = hidden
 
         self.homonym : int = homonym
@@ -28,7 +29,8 @@ class Entry:
         self.senses : list[Sense] = []
         self.examples : list[Example] = []
         self.sources : list[DictSource] = []
-        self.morphoDerivatives : list[NamedInternalRelation] = []
+        #self.morphoDerivatives : list[NamedInternalRelation] = []
+
 
     @staticmethod
     def fetch_all_entries(connection : DbConnection, omit_mwe : bool = False, omit_wordparts : bool = False,
@@ -44,13 +46,13 @@ class Entry:
                 where_clause = where_clause + """ or et.name = 'mwe'"""
             where_clause = '(' + where_clause + ')' + " and"
         sql_entries = f"""
-    SELECT e.id, type_id, name as type_name, heading, human_key, homonym_no,
-        primary_lexeme_id, e.data->>'Etymology' as etym, e.data as data, e.hidden
-    FROM {DbConnectionInfo.schema}.entries e
-    JOIN {DbConnectionInfo.schema}.entry_types et ON e.type_id = et.id
-    WHERE {where_clause} (NOT e.hidden or e.reason_for_hiding='not-public')
-    ORDER BY type_id, heading, homonym_no
-    """
+                SELECT e.id, type_id, name as type_name, heading, human_key, homonym_no,
+                    primary_lexeme_id, e.data->>'Etymology' as etym, e.data as data, e.hidden
+                FROM {DbConnectionInfo.schema}.entries e
+                JOIN {DbConnectionInfo.schema}.entry_types et ON e.type_id = et.id
+                WHERE {where_clause} (NOT e.hidden or e.reason_for_hiding='not-public')
+                ORDER BY type_id, heading, homonym_no
+                """
         cursor.execute(sql_entries)
         counter = 0
         while True:
@@ -59,7 +61,8 @@ class Entry:
                 break
             for db_row in entries:
                 counter = counter + 1
-                result = Entry(db_row['human_key'], db_row['homonym_no'], db_row['type_name'], db_row['heading'], db_row['hidden'])
+                result = Entry(db_row['id'], db_row['human_key'], db_row['homonym_no'],
+                               db_row['type_name'], db_row['heading'], db_row['hidden'])
                 if 'etym' in db_row:
                     result.etymology = db_row['etym']
                 result.gram = GramInfo.extract_gram(db_row, None)
@@ -79,8 +82,24 @@ class Entry:
                 if do_entrylevel_exmples:
                     result.examples = Example.fetch_examples(connection, db_row['id'], True)
                 result.sources = DictSource.fetch_sources_by_esl_id(connection, db_row['id'])
-                morpho_derivs = NamedInternalRelation.fetch_morpho_derivs(connection, db_row['id'])
-                if morpho_derivs:
-                    result.morphoDerivatives = morpho_derivs
+                #morpho_derivs = NamedInternalRelation.fetch_morpho_derivs(connection, db_row['id'])
+                #if morpho_derivs:
+                #    result.morphoDerivatives = morpho_derivs
                 yield result
             print(f'entries: {counter}\r')
+
+
+    @staticmethod
+    def fetch_all_entry_hk(connection: DbConnection) -> dict[int, str]:
+        cursor = connection.cursor(cursor_factory=DictCursor)
+        sql_entries = f"""
+                SELECT e.id, e.human_key
+                FROM {DbConnectionInfo.schema}.entries e
+                WHERE NOT e.hidden or e.reason_for_hiding='not-public'
+                """
+        cursor.execute(sql_entries)
+        entries = cursor.fetchall()
+        result = {}
+        for db_row in entries:
+            result[db_row['id']] = db_row['human_key']
+        return result

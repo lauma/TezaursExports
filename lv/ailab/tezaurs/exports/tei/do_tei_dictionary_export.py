@@ -63,8 +63,7 @@ with open(filename, 'w', encoding='utf8') as out:
         for entry in Entry.fetch_all_entries(connection, omit_mwe, omit_wordparts, omit_pot_wordparts, do_entrylevel_exmples):
             tei_printer.print_entry(entry, ili_map)
     except BaseException as err:
-        print(f"Entry was: {tei_printer.debug_entry_id}")
+        print(f"Entry was: {tei_printer.debugEntry}")
         raise
-    tei_printer.print_back_matter(dict_version_data['dictionary'], DictSource.fetch_all_sources(connection))
-    tei_printer.print_tail(dict_version_data['dictionary'])
+    tei_printer.print_tail(dict_version_data['dictionary'], DictSource.fetch_all_sources(connection))
 print(f'Done! Output written to {filename}')

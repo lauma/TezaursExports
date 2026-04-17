@@ -5,6 +5,7 @@ import warnings
 
 from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version, DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
+from lv.ailab.tezaurs.dbobjects.entries import Entry
 from lv.ailab.tezaurs.dbobjects.gram import combine_inherited_flags
 from lv.ailab.tezaurs.dbobjects.paradigms import Paradigm
 from lv.ailab.tezaurs.exports.tei.tei_output import TEIWriter
@@ -48,6 +49,10 @@ with open(filename, 'w', encoding='utf8') as out:
         dict_version_data['year'], dict_version_data['month'],
         dict_version_data['url'], dict_version_data['copyright_en'])
 
+    entry_id_hk_map = Entry.fetch_all_entry_hk(connection)
+    print("Entry mapping loaded!")
+
+    counter = 0
     for infl_json in wordform_source.process_line_by_line():
         if not infl_json or len(infl_json) < 1:
             continue
@@ -63,10 +68,15 @@ with open(filename, 'w', encoding='utf8') as out:
                 lexeme_flags = infl_json['flags']
             flags = combine_inherited_flags(lexeme_flags, paradigms[infl_json['paradigm']].flags,
                                             {'Stems', 'Morfotabulas tips', 'Paradigmas īpatnības'})
-            tei_printer.print_wordform_set_entry(
-                infl_json['entry_id'], infl_json['lexeme_id'], infl_json['lemma'], flags, infl_set)
-
-    tei_printer.print_tail(f"{dict_version_data['dictionary']}_wordforms")
+            entry_hk = entry_id_hk_map.get(infl_json['entry_id'])
+            if entry_hk:
+                tei_printer.print_wordform_set_entry(
+                    infl_json['entry_id'], entry_hk, infl_json['lexeme_id'], infl_json['lemma'], flags, infl_set)
+        counter = counter + 1
+        if counter % 1000 == 0:
+            print (f'lexemes: {counter}')
+    print (f'All {counter} lexemes done!')
+    tei_printer.print_tail(f"{dict_version_data['dictionary']}_wordforms", [])
 
 print(f'Done! Output written to {filename}')
 wordform_source.print_bad_line_log()
