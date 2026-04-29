@@ -27,3 +27,8 @@ Tēzaura vārdformu eksports šobrīd ir par lielu validēšanai ar jebkuru no �
 
 
 Nelielus TEI failus vai to fragmentus tiešsaistē var validēt arī https://teibyexample.org/exist/tools/TBEvalidator.htm
+
+# OMV validācija
+
+- Plašais validators ir šeit: https://github.com/globalwordnet/OMW
+- Python paka `wm` satur vienkāršāku validatoru: https://wn.readthedocs.io/en/latest/cli.html . Komanda lietošanai ir `python -m wn validate tezaurs_version-number_lmf.xml`
