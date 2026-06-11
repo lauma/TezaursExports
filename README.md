@@ -12,14 +12,16 @@ For the newest Tēzaurs TEI/LMF/ispell exports, search "Tēzaurs" in [Clarin.lv 
 
 ### Install
 
-Requires `psycopg2`, which doesn't install cleanly on OSX and requires that postgresql is installed via brew (not the downloaded .dmg installer) and the following
+Requires at least Python 3.14, `psycopg2`, `types-psycopg2` and `regex`.
+
+On OSX, `psycopg2` doesn't install cleanly and requires that `postgresql` is installed via `brew` (not the downloaded .dmg installer) and the following
 
 ```
 export PATH=$PATH:/Library/PostgreSQL/11/bin/
 pip3 install psycopg2
 ```
 
-Requires also `types-psycopg2` and `regex`.
+On Linux, if the system python is different, 3.14 can be installed with the help of `pyenv`. If installing `psycopg2` via `pip`, then use `psycopg2-binary`. If using PyCharm, don't forget to check that repository root (`TezaursExports`) is the working directory, when running any of the scripts. If PyCharm style folder `.venv` under repository root contains the appropriate Python enviroment, then any invocation examples given in `.bat` files become usable in shell by appending `/.venv/bin/` in front, e.g, `./.venv/bin/python -m lv.ailab.tezaurs.exports.lmf.do_lmf_wordnet_export tezaurs_2026_02`.
 
 For DB setup, see notes in [`setting_up_local_db.md`](./setting_up_local_db.md) (Latvian).
 
