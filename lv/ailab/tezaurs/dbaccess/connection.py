@@ -1,3 +1,5 @@
+from typing import Any
+
 import psycopg2
 from psycopg2.extras import DictCursor
 
@@ -5,7 +7,8 @@ from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
 type DbConnection = psycopg2._psycopg.connection
-type JsonData = dict[str,JsonData|list[JsonData|str]]
+# TODO: improve typing here
+type JsonData = dict[str, Any]
 
 
 def db_connect() -> DbConnection:

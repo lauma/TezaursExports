@@ -5,6 +5,7 @@
 *.jsonl
 *.log
 *-ignore.bat
+*-ignore.sh
 *.gf
 
 # DB config with password
