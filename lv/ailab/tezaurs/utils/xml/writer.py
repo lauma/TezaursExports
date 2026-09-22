@@ -9,6 +9,8 @@ class XMLWriter:
     DEFAULT_INDENT_CHARS : str = "  "
     DEFAULT_NEWLINE_CHARS : str = "\n"
     DEFAULT_ID_PART_SEPARATOR : str = "__"
+    DEFAULT_ID_ENDASH_SUBSITUTE : str = "--"
+    DEFAULT_ID_EMDASH_SUBSITUTE : str = "---"
 
     def __init__(self, file : TextIOWrapper, indent_chars : str = DEFAULT_INDENT_CHARS,
                  newline_chars : str = DEFAULT_NEWLINE_CHARS):
@@ -67,17 +69,22 @@ class XMLWriter:
     # NCName requirements, practically speaking are as follows (from https://stackoverflow.com/a/16949042).
     # Allowed characters: -, ., [0-9A-Za-z_]; plus all non-ASCII characters matching \p{L}+.
     # Also, digits, - and . cannot be used as the first character of the value.
-    # Disallowed characters:  , !, ", #, $, %, &, ', (, ), *, +, ,, /, :, ;, <, =, >, ?, @, [, \, ], ^, `` , {, |, }, ~`
+    # Disallowed characters:  , !, ", #, $, %, &, ', (, ), *, +, ,, /, :, ;, <, =, >, ?, @, [, \, ], ^, `` , {, |, }, ~, –, —`
     @staticmethod
     # FIXME more systematic escaping
-    def normalize_for_ncname(string : str, slash_replacement : str = DEFAULT_ID_PART_SEPARATOR,
-                             colon_replacement : str = DEFAULT_ID_PART_SEPARATOR) -> str:
+    def normalize_for_ncname(string : str,
+                             slash_replacement : str = DEFAULT_ID_PART_SEPARATOR,
+                             colon_replacement : str = DEFAULT_ID_PART_SEPARATOR,
+                             endash_replacement: str = DEFAULT_ID_ENDASH_SUBSITUTE,
+                             emdash_replacement: str = DEFAULT_ID_EMDASH_SUBSITUTE) -> str:
         unihex = lambda char : hex(ord(char))
         badchars = list ("!\"#$%&'()*+,;<=>?@[]]^`{}|~")
         result = string.replace(' ', '_')
         result = result.replace(':', colon_replacement)
         result = result.replace('\\', slash_replacement)
         result = result.replace('/', slash_replacement)
+        result = result.replace('–', endash_replacement)
+        result = result.replace('—', emdash_replacement)
 
         for badchar in badchars:
             result = result.replace(badchar, unihex(badchar))
