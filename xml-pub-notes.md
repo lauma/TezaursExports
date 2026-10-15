@@ -17,8 +17,8 @@ Lai validētu, nepieciešams komandrindas rīks `xmllint` vai `xmlstarlet` (Wind
 DTD specificē mazāk prasību, XSD prasa arī noteiktiem laukiem, piemēram, `sortKey` atbilst noteiktām regulārajām izteiksmēm, taču DTD kļūdu paziņojumi reizēm ir vienkāršāki (izņemot elementu `body`).
 
 Vārdnīcu pamata TEI bez vārdformu eksporta failu validē ar komandām:
-`xmllint --dtdvalid schemas/tei_all.dtd vardnica_????_?_tei.xml --noout --huge` (veiksmes gadījumā parādās paziņojums `vardnica_????_?_tei.xml validates`)
-`xmllint --schema schemas/tei_all.dxsd vardnica_????_?_tei.xml --noout --huge` (veiksmes gadījumā izvads ir tukšs)
+`xmllint --dtdvalid schemas/tei_all.dtd vardnica_????_?_tei.xml --noout --huge` (veiksmes gadījumā parādās paziņojums `vardnica_????_?_tei.xml validates` vai izvads ir tukšs)
+`xmllint --schema schemas/tei_all.xsd vardnica_????_?_tei.xml --noout --huge` (veiksmes gadījumā parādās paziņojums `vardnica_????_?_tei.xml validates` vai veiksmes gadījumā izvads ir tukšs)
 vai
 `xmlstarlet val --err --dtd schemas/tei_all.dtd vardnica_????_?_tei.xml` (veiksmes gadījumā pārādās paziņojums `vardnica_????_?_tei.xml - valid`)
 `xmlstarlet val --err --xsd schemas/tei_all.xsd vardnica_????_?_tei.xml` (veiksmes gadījumā pārādās paziņojums `vardnica_????_?_tei.xml - valid`, taču dokumentācijā ir norāde, ka šajā rīkā XSD validācija ir realizēta nepilnīgi)
@@ -31,4 +31,4 @@ Nelielus TEI failus vai to fragmentus tiešsaistē var validēt arī https://tei
 # OMV validācija
 
 - Plašais validators ir šeit: https://github.com/globalwordnet/OMW
-- Python paka `wm` satur vienkāršāku validatoru: https://wn.readthedocs.io/en/latest/cli.html . Komanda lietošanai ir `python -m wn validate tezaurs_version-number_lmf.xml`
+- Python paka `wm` satur vienkāršāku validatoru: https://wn.readthedocs.io/en/latest/cli.html . Komanda lietošanai ir `python -m wn validate tezaurs_version-number_lmf.xml` vai `./.venv/bin/python -m wn validate tezaurs_version-number_lmf.xml`

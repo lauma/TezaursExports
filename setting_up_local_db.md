@@ -13,4 +13,16 @@
     * `"schema":   "dict",`
     * `"user":     "postgres",`
     * `password` - kāda nu lietotājam `postgres` instalējot ir uzstādīta
+    
+    
+## DBeaver
+
+- Uztaisa DB
+- Uz DB ar otro peles taustiņu: _Tools/Execute script_ un norāda attiecīgo failu.
+
+## Linux
+
+Priekš Linux, lai pa tiešo importētu ar `psql` ir jāsakonfigurē failos `/etc/postgresql/??/main/pg_ident.conf` un `/etc/postgresql/??/main/pg_hba.conf` mapping starp sistēmas lietotāju un postgress, un tad ir jāraksta `psql -h localhost -p 5432 -U postgres teztest < tezaurs_2026_02-public.pgsql`.
+
+
 
