@@ -1,5 +1,5 @@
 from typing import Optional
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -22,7 +22,7 @@ class Example:
         where_clause = "sense_id"
         if entry_level_samples:
             where_clause = 'entry_id'
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_samples = f"""
     SELECT id, content, data->>'CitedSource' as source, (data->>'TokenLocation')::int as location, hidden, reason_for_hiding
     FROM {DbConnectionInfo.schema}.examples

@@ -1,4 +1,4 @@
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -48,7 +48,7 @@ class Wordform:
     def fetch_wordforms(connection : DbConnection, lexeme_id : int) -> list[Wordform]:
         if not lexeme_id:
             return []
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_wordforms = f"""
     SELECT id, form, data->'Gram'->'Flags' as flags, replaces_base
     FROM {DbConnectionInfo.schema}.wordforms

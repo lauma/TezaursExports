@@ -1,6 +1,5 @@
 from typing import Generator, Optional
-
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -36,7 +35,7 @@ class Entry:
     def fetch_all_entries(connection : DbConnection, omit_mwe : bool = False, omit_wordparts : bool = False,
                           omit_pot_wordparts : bool = False,
                           do_entrylevel_exmples : bool = False) -> Generator[Entry]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         where_clause = ""
         if omit_mwe or omit_wordparts:
             where_clause = """et.name = 'word'"""
@@ -91,7 +90,7 @@ class Entry:
 
     @staticmethod
     def fetch_all_entry_hk(connection: DbConnection) -> dict[int, str]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_entries = f"""
                 SELECT e.id, e.human_key
                 FROM {DbConnectionInfo.schema}.entries e

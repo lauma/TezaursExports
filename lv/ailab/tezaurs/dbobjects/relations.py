@@ -1,5 +1,5 @@
 from typing import Optional
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -22,7 +22,7 @@ class NamedInternalRelation:
     @staticmethod
     def fetch_morpho_derivs(connection : DbConnection, lexeme_id : int) -> list[NamedInternalRelation]:
         result = []
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_derivs_from = f"""
     SELECT lr.id, lrt.name, lrt.name_inverse, l2.id as end_id, e2.human_key as end_human_key,
            lr.data as data, lr.hidden
@@ -70,7 +70,7 @@ class NamedInternalRelation:
 
     @staticmethod
     def fetch_semantic_derivs_by_sense(connection : DbConnection, sense_id : int, synseted_other_end : bool = False) -> list[NamedInternalRelation]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         result = []
 
         where_clause_1 = "" if not synseted_other_end else "AND s2.synset_id IS NOT NULL"
@@ -132,7 +132,7 @@ class NamedInternalRelation:
     def fetch_synset_relations(connection : DbConnection, synset_id : int) -> list[NamedInternalRelation]:
         result = []
 
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset_rels_1 = f"""
     SELECT rel.id, rel.synset_1_id as other, rel.hidden, tp.name, tp.name_inverse, tp.relation_name as rel_name
     FROM {DbConnectionInfo.schema}.synset_relations rel
@@ -186,7 +186,7 @@ class GlossLink:
 
     @staticmethod
     def fetch_gloss_entry_links(connection : DbConnection, sense_id : int) -> dict[int, GlossLink]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_links = f"""
     SELECT r.id, e.human_key, e.id as entry_id
     FROM {DbConnectionInfo.schema}.sense_entry_relations r
@@ -206,7 +206,7 @@ class GlossLink:
 
     @staticmethod
     def fetch_gloss_sense_links(connection : DbConnection, sense_id : int) -> dict[int, GlossLink]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_links = f"""
     SELECT r.id, s.id as sense_id, s.order_no as sense_order, ps.order_no as parent_order, e.human_key
     FROM {DbConnectionInfo.schema}.sense_relations r
@@ -248,7 +248,7 @@ class ExternalRelation:
         where_clause = ''
         if rel_type is not None:
             where_clause = f"and lt.name = '{rel_type}' "
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset_lexemes = f"""
     SELECT syn.id as synset_id, el.url as url, el.remote_id as remote_id, lt.name as type,
            lt.description as description
@@ -272,7 +272,7 @@ class ExternalRelation:
         where_clause = ''
         if rel_type is not None:
             where_clause = f"and lt.name = '{rel_type}' "
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset_lexemes = f"""
     SELECT syn.id as synset_id, el.url as url, el.remote_id as remote_id, lt.name as type,
            lt.description as description, el.data->>'Relation' as rel_scope

@@ -1,6 +1,6 @@
 from functools import reduce
 from typing import Optional, Generator
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -34,7 +34,7 @@ class Lexeme:
 
     @staticmethod
     def fetch_lexemes(connection : DbConnection, entry_id : int, main_lex_id : int) -> list[Lexeme]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_senses = f"""
     SELECT l.id, lemma, lt.name as lexeme_type, p.human_key as paradigm, stem1, stem2, stem3,
         l.data, p.data as paradigm_data, l.hidden
@@ -67,7 +67,7 @@ class Lexeme:
 
     @staticmethod
     def fetch_synset_lexemes(connection : DbConnection, synset_id : int) -> list[Lexeme]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset_lexemes = f"""
     SELECT syn.id,
         l.id as lexeme_id, l.lemma as lemma, l.hidden, e.id as entry_id, e.human_key as entry_hk
@@ -96,7 +96,7 @@ class Lexeme:
 
     @staticmethod
     def fetch_all_synseted_lexemes(connection : DbConnection) -> Generator[Lexeme]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset_lexemes = f"""
     SELECT l.id AS id, l.entry_id AS entry_id, l.lemma AS lemma,
         l.data, p.data AS paradigm_data, l.hidden,
@@ -132,7 +132,7 @@ class Lexeme:
 
     @staticmethod
     def fetch_all_lexemes_with_paradigms_and_synsets(connection : DbConnection) -> Generator[Lexeme]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_lexemes = f"""
     SELECT l.id, l.lemma, l.data, p.data as paradigm_data, p.human_key as paradigm,
         stem1, stem2, stem3, l.hidden

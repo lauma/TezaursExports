@@ -1,5 +1,5 @@
 from typing import Optional
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -16,7 +16,7 @@ class DictSource:
 
     @staticmethod
     def fetch_all_sources(connection : DbConnection) -> list[DictSource]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_dict_sources = f"""
             SELECT abbr, title, url
             FROM {DbConnectionInfo.schema}.sources
@@ -37,7 +37,7 @@ class DictSource:
                                 lexeme_id : Optional[int] = None, sense_id : Optional[int] = None) -> list[DictSource]:
         if not entry_id and not sense_id and not lexeme_id:
             return []
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         where_clause = ""
         if entry_id:
             where_clause = f"""entry_id = {entry_id}"""

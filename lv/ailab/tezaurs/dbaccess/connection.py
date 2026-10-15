@@ -1,12 +1,11 @@
 from typing import Any
-
-import psycopg2
-from psycopg2.extras import DictCursor
+import psycopg
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
 
 
-type DbConnection = psycopg2._psycopg.connection
+type DbConnection = psycopg.connection.Connection
 # TODO: improve typing here
 type JsonData = dict[str, Any]
 
@@ -17,7 +16,7 @@ def db_connect() -> DbConnection:
         raise Exception("Postgres connection error: connection information must be supplied in <conn_info>")
 
     print(f'Connecting to database {DbConnectionInfo.dbname}, schema {DbConnectionInfo.schema}')
-    db_connection = psycopg2.connect(
+    db_connection = psycopg.connect(
             host=DbConnectionInfo.host,
             port=DbConnectionInfo.port,
             dbname=DbConnectionInfo.dbname,
@@ -28,8 +27,8 @@ def db_connect() -> DbConnection:
     return db_connection
 
 
-def get_dict_version(connection : DbConnection) -> dict[str, str]:
-    cursor = connection.cursor(cursor_factory=DictCursor)
+def get_dict_version(connection : DbConnection) -> dict[str, str] | None:
+    cursor = connection.cursor(row_factory=dict_row)
     sql_dict_properties = f"""
     SELECT title, extract(YEAR from release_timestamp) as year, extract(MONTH from release_timestamp) as month,
         info->'dictionary' #>> '{{}}' as dictionary, info->'tag' #>> '{{}}' as tag,
@@ -46,6 +45,8 @@ def get_dict_version(connection : DbConnection) -> dict[str, str]:
 """
     cursor.execute(sql_dict_properties)
     db_row = cursor.fetchone()
+    if not db_row:
+        return None
     return {
         'dictionary': db_row['dictionary'],
         'title_short': db_row['title_short'],

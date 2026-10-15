@@ -1,6 +1,6 @@
 from typing import Optional, Generator
 import regex
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -33,7 +33,7 @@ class Sense:
 
     @staticmethod
     def fetch_senses(connection : DbConnection, entry_id : int, parent_sense_id : int = None) -> list[Sense]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         parent_sense_clause = 'is NULL'
         if parent_sense_id:
             parent_sense_clause = f"""= {parent_sense_id}"""
@@ -80,7 +80,7 @@ class Sense:
     def fetch_synset_senses(connection : DbConnection, synset_id : int) -> list[Sense]:
         if not synset_id:
             return []
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset_senses = f"""
     SELECT syn.id, s.id as sense_id, s.order_no as sense_no, s.gloss, s.hidden,
            sp.order_no as parent_sense_no, e.human_key as entry_hk
@@ -111,7 +111,7 @@ class Sense:
 
     @staticmethod
     def fetch_synseted_senses_by_lexeme(connection : DbConnection, lexeme_id : int) -> list[Sense]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_senses = f"""
     SELECT s.id AS sense_id, s.order_no, s.gloss, s.hidden, s.synset_id
     FROM {DbConnectionInfo.schema}.senses s
@@ -149,7 +149,7 @@ class Synset:
 
     @staticmethod
     def fetch_all_synsets(connection : DbConnection, filter_ext_rel_by : str = None) -> Generator[Synset]:
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_synset = f"""
     SELECT syn.id
     FROM {DbConnectionInfo.schema}.synsets as syn
@@ -188,7 +188,7 @@ class Gradset:
         if not member_synset_id:
             return None
 
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_gradset = f"""
     SELECT syn.id as synset_id, syn.gradset_id as gradset_id, grad.synset_id as gradset_cat
     FROM  {DbConnectionInfo.schema}.synsets syn

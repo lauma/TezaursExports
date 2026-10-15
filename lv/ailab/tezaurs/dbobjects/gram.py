@@ -1,5 +1,5 @@
 from typing import Optional, Iterable
-from psycopg2.extras import DictRow
+from psycopg.rows import DictRow
 
 from lv.ailab.tezaurs.dbaccess.connection import JsonData
 from lv.ailab.tezaurs.utils.dict.morpho_constants import MorphoAttr

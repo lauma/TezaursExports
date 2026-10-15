@@ -1,4 +1,4 @@
-from psycopg2.extras import DictCursor
+from psycopg.rows import dict_row
 
 from lv.ailab.tezaurs.dbaccess.connection import DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -14,7 +14,7 @@ class Paradigm:
     @staticmethod
     def fetch_all_paradigms(connection : DbConnection) -> dict[str, Paradigm]:
         result = {}
-        cursor = connection.cursor(cursor_factory=DictCursor)
+        cursor = connection.cursor(row_factory=dict_row)
         sql_paradigms = f"""
     SELECT id, data as flags, human_key as paradigm
     FROM {DbConnectionInfo.schema}.paradigms
