@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import regex
 
 from lv.ailab.tezaurs.dbaccess.connection import db_connect, get_dict_version, DbConnection
 from lv.ailab.tezaurs.dbaccess.db_config import DbConnectionInfo
@@ -27,6 +28,7 @@ ili = IliMapping()
 connection = db_connect()
 dict_version_data = get_dict_version(connection)
 dict_version = dict_version_data['tag']
+wordnet_vers = regex.sub(r'^.*?_(\d+)_(\d+)\s*$', r'\1.\2', dict_version)
 filename = f'{dict_version}_lmf.xml'
 with open(filename, 'w', encoding='utf8') as f:
     lmf_printer = LMFWriter(f, dict_version, wordnet_id)
